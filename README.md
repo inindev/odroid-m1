@@ -8,7 +8,7 @@ debian arm64 linux for the odroid m1
 
 **1. download image:**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0/bookworm.img.xz
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc1/bookworm_12.0-prerelease.img.xz
 ```
 
 <br/>
