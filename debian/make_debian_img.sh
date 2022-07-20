@@ -29,7 +29,7 @@ main() {
 
     echo "\n${h1}downloading files...${rst}"
     local cache="cache.$deb_dist"
-    local dtb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/rk3568-odroid-m1.dtb')
+    local dtb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0-rc1/rk3568-odroid-m1.dtb')
 
     if [ ! -b "$media" ]; then
         echo "\n${h1}creating image file...${rst}"
