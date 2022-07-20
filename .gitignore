@@ -1,0 +1,9 @@
+*._*
+.DS_Store
+debian/cache*
+debian/*.img
+debian/*.img.xz
+dtb/linux-*
+dtb/*.dts
+dtb/*.dtsi
+dtb/*.dtb
