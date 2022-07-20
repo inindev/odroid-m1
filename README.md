@@ -32,7 +32,7 @@ brw-rw---- 1 root disk 8, 0 Jul 20 18:44 /dev/sda
 
 **3. in the case above, substitute 'a' for 'X' in the command below (for /dev/sda):**
 ```
-sudo sh -c 'xzcat bookworm.img.xz > /dev/sdX && sync'
+sudo sh -c 'xzcat bookworm_12.0-prerelease.img.xz > /dev/sdX && sync'
 ```
 
 #### when the micro sd has finished imaging, eject and use it to boot the odroid m1 to finish setup
