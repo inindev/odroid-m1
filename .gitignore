@@ -1,8 +1,9 @@
 *._*
 .DS_Store
-debian/cache*
+cache*
 debian/*.img
 debian/*.img.xz
+debian/rootfs
 dtb/linux-*
 dtb/*.dts
 dtb/*.dtsi
