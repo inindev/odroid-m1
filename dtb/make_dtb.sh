@@ -6,7 +6,7 @@ set -e
 # kernel.org linux version
 
 main() {
-    local lv='5.19-rc7'
+    local lv='5.19'
 
     if [ 'clean' = "$1" ]; then
         rm -f rk356?*
@@ -16,29 +16,19 @@ main() {
     fi
 
     local cache="cache.$lv"
-    local ltar=$(download "$cache" "https://git.kernel.org/torvalds/t/linux-$lv.tar.gz")
-    local odroidm1=$(download "$cache/patches" 'https://raw.githubusercontent.com/tobetter/linux/odroid-5.19.y/arch/arm64/boot/dts/rockchip/rk3568-odroid-m1.dts')
-    local rk3568=$(download "$cache/patches" 'https://raw.githubusercontent.com/tobetter/linux/odroid-5.19.y/arch/arm64/boot/dts/rockchip/rk3568.dtsi')
-    local rk356x=$(download "$cache/patches" 'https://raw.githubusercontent.com/tobetter/linux/odroid-5.19.y/arch/arm64/boot/dts/rockchip/rk356x.dtsi')
+    local ltar=$(download "$cache" "https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$lv.tar.xz")
+    local odroidm1=$(download "$cache" 'https://raw.githubusercontent.com/tobetter/linux/odroid-5.19.y/arch/arm64/boot/dts/rockchip/rk3568-odroid-m1.dts')
 
     if [ ! -d "linux-$lv" ]; then
-        local ext=$(printf '%s' "$ltar" | awk -F . '{if (NF>1) {print $NF}}')
-        local cf=''
-        case "$ext" in
-            'xz')  cf='J' ;;
-            'gz')  cf='z' ;;
-            'tar') cf=''  ;;
-            *) echo 'error' && exit 1 ;;
-        esac
-        tar "${cf}xvf" "$ltar" "linux-$lv/include/dt-bindings" "linux-$lv/include/uapi" "linux-$lv/arch/arm64/boot/dts/rockchip"
+        tar "xavf" "$ltar" "linux-$lv/include/dt-bindings" "linux-$lv/arch/arm64/boot/dts/rockchip"
     fi
 
-    # patches from hardkernel https://github.com/tobetter/linux/tree/odroid-5.19.y
     local lrcp="linux-$lv/arch/arm64/boot/dts/rockchip"
     if [ ! -f "$lrcp/rk3568-odroid-m1.dts" ]; then
         cp "$odroidm1" "$lrcp"
-        cp "$rk3568" "$lrcp"
-        cp "$rk356x" "$lrcp"
+        for patch in patches/*.patch; do
+            patch -p1 -d "linux-$lv" -i "../$patch"
+        done
     fi
 
     if [ 'links' = "$1" ]; then
