@@ -8,7 +8,7 @@ debian arm64 linux for the odroid m1
 
 **1. download image:**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc1/bookworm_12.0-prerelease.img.xz
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc2/odroidm1_12.0-rc2.img.xz
 ```
 
 <br/>
@@ -32,7 +32,7 @@ brw-rw---- 1 root disk 8, 0 Jul 20 18:44 /dev/sda
 
 **3. in the case above, substitute 'a' for 'X' in the command below (for /dev/sda):**
 ```
-sudo sh -c 'xzcat bookworm_12.0-prerelease.img.xz > /dev/sdX && sync'
+sudo sh -c 'xzcat odroidm1_12.0-rc2.img.xz > /dev/sdX && sync'
 ```
 
 #### when the micro sd has finished imaging, eject and use it to boot the odroid m1 to finish setup
