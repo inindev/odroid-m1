@@ -163,7 +163,7 @@ format_media() {
 
     # create ext4 filesystem
     if [ -b "$media" ]; then
-        local part1="/dev/$(lsblk -no kname "$media" | grep '.*1$')"
+        local part1="/dev/$(lsblk -no kname "$media" | grep '.*p1$')"
         mkfs.ext4 "$part1"
         sync
     else
@@ -188,7 +188,7 @@ mount_media() {
     fi
 
     if [ -b "$media" ]; then
-        local part1="/dev/$(lsblk -no kname "$media" | grep '.*1$')"
+        local part1="/dev/$(lsblk -no kname "$media" | grep '.*p1$')"
         mount -n "$part1" "$mountpoint"
     else
         mount -n -o loop,offset=16M "$media" "$mountpoint"
@@ -312,8 +312,7 @@ script_boot_txt() {
     cat <<-EOF
 	# after modifying, run ./mkscr.sh
 
-    # earlycon=uart8250,mmio32,0xff1a0000
-	setenv bootargs console=ttyS2,1500000 root=PARTUUID=$part_uuid rw rootwait$no_ipv6
+	setenv bootargs console=ttyS2,1500000 root=PARTUUID=$part_uuid rw rootwait$no_ipv6 earlycon=uart8250,mmio32,0xfe660000
 
 	if load \${devtype} \${devnum}:\${partition} \${kernel_addr_r} /boot/vmlinuz; then
 	    if load \${devtype} \${devnum}:\${partition} \${fdt_addr_r} /boot/dtb; then
