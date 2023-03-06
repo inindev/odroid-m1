@@ -121,3 +121,56 @@ mmc_2g.img.xz
 
 <br/>
 
+
+---
+### installing on m.2 ssd /dev/nvme0n1 media
+
+<br/>
+
+**1. copy the image file on to the ssd media (root user required)**
+```
+xzcat odroidm1_12.0-rc2.img.xz > /dev/nvme0n1
+```
+
+<br/>
+
+**2. remove mmc media and boot from petitboot**
+
+<br/>
+
+
+---
+### determining partition uuid
+
+<br/>
+
+**the partition uuid is required for the boot script /boot/boot.txt**
+```
+fdisk /dev/nvme0n1
+
+select command i
+
+Selected partition 1
+         Device: /dev/nvme0n1p1
+          Start: 32768
+            End: 976773119
+        Sectors: 976740352
+           Size: 465.7G
+           Type: Linux filesystem
+      Type-UUID: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+           UUID: 48432519-7258-4785-977e-3b1d26d88169
+           Name: rootfs
+
+select command q to exit
+
+```
+
+<br/>
+
+**place the uuid in the /boot/boot.txt build script and regenerate**
+```
+setenv bootargs console=ttyS2,1500000 root=PARTUUID=48432519-7258-4785-977e-3b1d26d88169 rw rootwait...
+./mkscr.sh
+```
+
+<br/>
