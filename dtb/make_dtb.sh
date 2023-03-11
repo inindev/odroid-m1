@@ -7,7 +7,7 @@ main() {
     local rkpath="linux-$lv/arch/arm64/boot/dts/rockchip"
 
     if [ '_clean' = "_$1" ]; then
-        rm -f *.dt?
+        rm -f *.dt*
         rm -rf "linux-$lv"
         echo '\nclean complete\n'
         exit 0
@@ -25,7 +25,9 @@ main() {
 
     if [ '_links' = "_$1" ]; then
         ln -sf "$rkpath/rk3568-odroid-m1.dts"
-        echo '\nlink created\n'
+        ln -sf "$rkpath/rk3568.dtsi"
+        ln -sf "$rkpath/rk356x.dtsi"
+        echo '\nlinks created\n'
         exit 0
     fi
 
@@ -33,7 +35,7 @@ main() {
     gcc -I "linux-$lv/include" -E -nostdinc -undef -D__DTS__ -x assembler-with-cpp -o rk3568-odroid-m1-top.dts "$rkpath/rk3568-odroid-m1.dts"
     dtc -@ -I dts -O dtb -o rk3568-odroid-m1.dtb rk3568-odroid-m1-top.dts
 
-    echo '\nbuild complete: rk3568-odroid-m1.dtb\n'
+    echo '\n${cya}build complete: rk3568-odroid-m1.dtb${rst}\n'
 }
 
 # check if utility program is installed
@@ -61,3 +63,4 @@ cya='\033[36m'
 h1="${blu}==>${rst} ${bld}"
 
 main $@
+
