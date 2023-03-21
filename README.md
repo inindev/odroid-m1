@@ -1,5 +1,13 @@
 # odroid-m1
-debian arm64 linux for the odroid m1
+#### *Stock Debian ARM64 Linux for the ODROID-M1*
+
+This stock Debian ARM64 Linux image is built directly from official packages using the official Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L67
+
+Being an official unmodified Debian build, patches are directory available from the Debian repos using the stock **apt** package manager, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L238
+
+If you want to run true up-stream Debian Linux on your ARM64 device, this is the way to do it.
+
+<br/>
 
 ---
 ### debian bookworm setup
