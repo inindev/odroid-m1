@@ -1,9 +1,9 @@
 # odroid-m1
 #### *Stock Debian ARM64 Linux for the ODROID-M1*
 
-This stock Debian ARM64 Linux image is built directly from official packages using the official Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L67
+This stock Debian ARM64 Linux image is built directly from official packages using the official Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L92
 
-Being an official unmodified Debian build, patches are directory available from the Debian repos using the stock **apt** package manager, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L238
+Being an official unmodified Debian build, patches are directory available from the Debian repos using the stock **apt** package manager, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L327
 
 If you want to run true up-stream Debian Linux on your ARM64 device, this is the way to do it.
 
@@ -16,7 +16,7 @@ If you want to run true up-stream Debian Linux on your ARM64 device, this is the
 
 **1. download image**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc2/odroidm1_12.0-rc2.img.xz
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc3/odroidm1_12.0-rc3.img.xz
 ```
 
 <br/>
@@ -137,7 +137,7 @@ mmc_2g.img.xz
 
 **1. copy the image file on to the ssd media (root user required)**
 ```
-xzcat odroidm1_12.0-rc2.img.xz > /dev/nvme0n1
+xzcat odroidm1_12.0-rc3.img.xz > /dev/nvme0n1
 ```
 
 <br/>
