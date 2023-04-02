@@ -25,8 +25,8 @@ sudo sh -c 'xzcat mmc_2g.img.xz > /dev/sdX && sync'
 ```
 media='mmc_2g.img' # or block device '/dev/sdX'
 deb_dist='bookworm'
-hostname='deb-arm64'
+hostname='odroidm1-arm64'
 acct_uid='debian'
 acct_pass='debian'
-disable_ipv6='true'
+disable_ipv6=true
 ```
