@@ -40,18 +40,38 @@ main() {
 
     # outputs: idbloader.img & u-boot.itb
     rm -f idbloader.img u-boot.itb
+    rm -f idbloader-spi.img u-boot-spi.itb
     if [ '_inc' != "_$1" ]; then
         make -C u-boot distclean
-        make -C u-boot odroid-m1-rk3568_defconfig
     fi
+
+    # outputs: idbloader.img & u-boot.itb
+    make -C u-boot odroid-m1-rk3568_defconfig
     make -C u-boot -j$(nproc) BL31=$atf_file ROCKCHIP_TPL=$tpl_file
-    ln -sf u-boot/idbloader.img
-    ln -sf u-boot/u-boot.itb
+    cp u-boot/idbloader.img .
+    cp u-boot/u-boot.itb .
+
+    # outputs: idbloader-spi.img & u-boot-spi.itb
+    make -C u-boot odroid-m1-rk3568_spiflash_defconfig
+    make -C u-boot -j$(nproc) BL31=$atf_file ROCKCHIP_TPL=$tpl_file
+    cp u-boot/idbloader-spi.img .
+    cp u-boot/u-boot.itb u-boot-spi.itb
+
+    # make spi image file
+    #dd bs=64K count=64 if=/dev/zero | tr '\000' '\377' > rockpi-4cplus-uboot-spi.img
+    #dd bs=4K seek=8 if=u-boot/idbloader-spi.img of=rockpi-4cplus-uboot-spi.img conv=notrunc
+    #dd bs=4K seek=512 if=u-boot/u-boot-spi.itb of=rockpi-4cplus-uboot-spi.img conv=notrunc
 
     echo "\n${cya}idbloader and u-boot binaries are now ready${rst}"
     echo "\n${cya}copy images to media:${rst}"
     echo "  ${cya}sudo dd bs=4K seek=8 if=idbloader.img of=/dev/sdX conv=notrunc${rst}"
     echo "  ${cya}sudo dd bs=4K seek=2048 if=u-boot.itb of=/dev/sdX conv=notrunc,fsync${rst}"
+    echo
+    echo "${blu}optionally, flash to spi (apt install mtd-utils):${rst}"
+    echo "  ${blu}flash_erase /dev/mtd0 0 0${rst}"
+    echo "  ${blu}nandwrite /dev/mtd0 idbloader-spi.img${rst}"
+    echo "  ${blu}flash_erase /dev/mtd2 0 0${rst}"
+    echo "  ${blu}nandwrite /dev/mtd2 u-boot-spi.itb${rst}"
     echo
 }
 

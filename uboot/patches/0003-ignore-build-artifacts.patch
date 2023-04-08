@@ -1,7 +1,7 @@
-From 98916510299ee0b212a541698d9149ae0b741a04 Mon Sep 17 00:00:00 2001
+From 5bdf84e7718e09407119859af9840fca3a7bf1d1 Mon Sep 17 00:00:00 2001
 From: John Clark <inindev@gmail.com>
 Date: Tue, 7 Mar 2023 01:47:26 +0000
-Subject: [PATCH 2/2] ignore build artifacts
+Subject: [PATCH 3/3] ignore build artifacts
 
 ---
  .gitignore | 3 ++-
