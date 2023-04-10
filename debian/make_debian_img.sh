@@ -18,7 +18,6 @@ main() {
     local acct_uid='debian'
     local acct_pass='debian'
     local disable_ipv6=true
-    local part_uuid='0011732f-7182-416f-8962-d8b252435c47'
     local extra_pkgs='curl, pciutils, sudo, u-boot-tools, unzip, wget, xxd, xz-utils, zip, zstd'
 
     is_param 'clean' $@ && rm -rf cache.* && rm mmc_2g.img* && exit 0
@@ -50,8 +49,12 @@ main() {
     local lfw=$(download "$cache" 'https://mirrors.edge.kernel.org/pub/linux/kernel/firmware/linux-firmware-20230210.tar.xz')
     local lfwsha='6e3d9e8d52cffc4ec0dbe8533a8445328e0524a20f159a5b61c2706f983ce38a'
     # device tree
-    local dtb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0-rc3/rk3568-odroid-m1.dtb')
+    local dtb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12-rc4/rk3568-odroid-m1.dtb')
 #    local dtb='../dtb/rk3568-odroid-m1.dtb'
+    local uboot_spl=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12-rc4/idbloader.img')
+#    local uboot_spl='../uboot/idbloader.img'
+    local uboot_itb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12-rc4/u-boot.itb')
+#    local uboot_itb='../uboot/u-boot.itb'
 
     if [ "$lfwsha" != $(sha256sum "$lfw" | cut -c1-64) ]; then
         echo "invalid hash for linux firmware: $lfw"
@@ -63,13 +66,23 @@ main() {
         exit 4
     fi
 
+    if [ ! -f "$uboot_spl" ]; then
+        echo "unable to fetch uboot binary: $uboot_spl"
+        exit 4
+    fi
+
+    if [ ! -f "$uboot_itb" ]; then
+        echo "unable to fetch uboot binary: $uboot_itb"
+        exit 4
+    fi
+
     if [ ! -b "$media" ]; then
         print_hdr "creating image file"
         make_image_file "$media"
     fi
 
     print_hdr "partitioning media"
-    parition_media "$media" "$part_uuid"
+    parition_media "$media"
 
     print_hdr "formatting media"
     format_media "$media"
@@ -117,10 +130,10 @@ main() {
     sed -i '/alias.l.=/s/^#*\s*//' "$mountpt/root/.bashrc"
 
     # motd (off by default)
-    is_param 'motd' $@ && [ -f '../etc/motd' ] && cp -f '../etc/motd' "$mountpt/etc/motd"
+    is_param 'motd' $@ && [ -f '../etc/motd' ] && cp -f '../etc/motd' "$mountpt/etc"
 
     # setup /boot
-    echo "$(script_boot_txt $part_uuid $disable_ipv6)\n" > "$mountpt/boot/boot.txt"
+    echo "$(script_boot_txt $disable_ipv6)\n" > "$mountpt/boot/boot.txt"
     mkimage -A arm64 -O linux -T script -C none -n 'u-boot boot script' -d "$mountpt/boot/boot.txt" "$mountpt/boot/boot.scr"
     echo "$(script_mkscr_sh)\n" > "$mountpt/boot/mkscr.sh"
     chmod 754 "$mountpt/boot/mkscr.sh"
@@ -153,6 +166,10 @@ main() {
     umount "$mountpt"
     rm -rf "$mountpt"
 
+    print_hdr "installing u-boot"
+    dd bs=4K seek=8 if="$uboot_spl" of="$media" conv=notrunc
+    dd bs=4K seek=2048 if="$uboot_itb" of="$media" conv=notrunc,fsync
+
     if $compress; then
         print_hdr "compressing image file"
         xz -z8v "$media"
@@ -179,14 +196,13 @@ make_image_file() {
 
 parition_media() {
     local media="$1"
-    local part_uuid="$2"
 
     # partition with gpt
     cat <<-EOF | sfdisk "$media"
 	label: gpt
 	unit: sectors
 	first-lba: 2048
-	part1: start=32768, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=$part_uuid, name=rootfs
+	part1: start=32768, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=rootfs
 	EOF
     sync
 }
@@ -384,8 +400,12 @@ script_rc_local() {
 	    # expand root parition
 	    rp=\$(findmnt / -o source -n)
 	    rpn=\$(echo "\$rp" | grep -o '[[:digit:]]*\$')
-	    rd="/dev/\$(/usr/bin/lsblk -no pkname \$rp)"
+	    rd="/dev/\$(lsblk -no pkname \$rp)"
 	    echo ', +' | sfdisk -f -N \$rpn \$rd
+
+	    # change uuid on partition
+	    uuid=\$(cat /proc/sys/kernel/random/uuid)
+	    sfdisk --part-uuid \$rd \$rpn \$uuid
 
 	    # setup for expand fs
 	    chmod 774 "\$this"
@@ -395,19 +415,17 @@ script_rc_local() {
 }
 
 script_boot_txt() {
-    local part_uuid=$1
-    local no_ipv6="$($2 && echo ' ipv6.disable=1')"
+    local no_ipv6="$($1 && echo ' ipv6.disable=1')"
 
     cat <<-EOF
 	# after modifying, run ./mkscr.sh
-
-	setenv bootargs console=ttyS2,1500000 root=PARTUUID=$part_uuid rw rootwait$no_ipv6 earlycon=uart8250,mmio32,0xfe660000
-
-	if load \${devtype} \${devnum}:\${partition} \${kernel_addr_r} /boot/vmlinuz; then
-	    if load \${devtype} \${devnum}:\${partition} \${fdt_addr_r} /boot/dtb; then
+	part uuid \${devtype} \${devnum}:\${distro_bootpart} uuid
+	setenv bootargs console=ttyS2,1500000 root=PARTUUID=\${uuid} rw rootwait$no_ipv6 earlycon=uart8250,mmio32,0xfe660000
+	if load \${devtype} \${devnum}:\${distro_bootpart} \${kernel_addr_r} /boot/vmlinuz; then
+	    if load \${devtype} \${devnum}:\${distro_bootpart} \${fdt_addr_r} /boot/dtb; then
 	        fdt addr \${fdt_addr_r}
 	        fdt resize
-	        if load \${devtype} \${devnum}:\${partition} \${ramdisk_addr_r} /boot/initrd.img; then
+	        if load \${devtype} \${devnum}:\${distro_bootpart} \${ramdisk_addr_r} /boot/initrd.img; then
 	            booti \${kernel_addr_r} \${ramdisk_addr_r}:\${filesize} \${fdt_addr_r};
 	        else
 	            booti \${kernel_addr_r} - \${fdt_addr_r};
