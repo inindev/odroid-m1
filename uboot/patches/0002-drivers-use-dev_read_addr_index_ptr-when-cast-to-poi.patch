@@ -1,0 +1,142 @@
+From 8f91a0037d24ad43716de9294fb1146ece9c730f Mon Sep 17 00:00:00 2001
+From: Johan Jonker <jbx6244@gmail.com>
+Date: Mon, 13 Mar 2023 01:31:49 +0100
+Subject: [PATCH 02/17] drivers: use dev_read_addr_index_ptr when cast to
+ pointer
+
+The fdt_addr_t and phys_addr_t size have been decoupled. A 32bit CPU
+can expect 64-bit data from the device tree parser, so use
+dev_read_addr_index_ptr instead of the dev_read_addr_index function
+in the various files in the drivers directory that cast to a pointer.
+As we are there also streamline the error response to -EINVAL on return.
+
+Signed-off-by: Johan Jonker <jbx6244@gmail.com>
+Reviewed-by: Michael Trimarchi <michael@amarulasolutions.com>
+Reviewed-by: Simon Glass <sjg@chromium.org>
+---
+ drivers/mtd/nand/raw/cortina_nand.c |  4 ++--
+ drivers/net/dm9000x.c               |  2 +-
+ drivers/net/dwmac_meson8b.c         |  4 ++--
+ drivers/pci/pcie_dw_meson.c         |  8 ++++----
+ drivers/pci/pcie_dw_rockchip.c      |  8 ++++----
+ drivers/watchdog/sbsa_gwdt.c        | 12 ++++++------
+ 6 files changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/mtd/nand/raw/cortina_nand.c b/drivers/mtd/nand/raw/cortina_nand.c
+index 88798f233e..8de35731a5 100644
+--- a/drivers/mtd/nand/raw/cortina_nand.c
++++ b/drivers/mtd/nand/raw/cortina_nand.c
+@@ -1175,8 +1175,8 @@ static int fdt_decode_nand(struct udevice *dev, struct nand_drv *info)
+ 	int ecc_strength;
+ 
+ 	info->reg = (struct nand_ctlr *)dev_read_addr(dev);
+-	info->dma_glb = (struct dma_global *)dev_read_addr_index(dev, 1);
+-	info->dma_nand = (struct dma_ssp *)dev_read_addr_index(dev, 2);
++	info->dma_glb = dev_read_addr_index_ptr(dev, 1);
++	info->dma_nand = dev_read_addr_index_ptr(dev, 2);
+ 	info->config.enabled = dev_read_enabled(dev);
+ 	ecc_strength = dev_read_u32_default(dev, "nand-ecc-strength", 16);
+ 	info->flash_base =
+diff --git a/drivers/net/dm9000x.c b/drivers/net/dm9000x.c
+index b46bdeb23b..bec8d67dad 100644
+--- a/drivers/net/dm9000x.c
++++ b/drivers/net/dm9000x.c
+@@ -651,7 +651,7 @@ static int dm9000_of_to_plat(struct udevice *dev)
+ 
+ 	pdata->iobase = dev_read_addr_index(dev, 0);
+ 	db->base_io = (void __iomem *)pdata->iobase;
+-	db->base_data = (void __iomem *)dev_read_addr_index(dev, 1);
++	db->base_data = dev_read_addr_index_ptr(dev, 1);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/net/dwmac_meson8b.c b/drivers/net/dwmac_meson8b.c
+index ddbaa87daf..871171e1be 100644
+--- a/drivers/net/dwmac_meson8b.c
++++ b/drivers/net/dwmac_meson8b.c
+@@ -41,8 +41,8 @@ static int dwmac_meson8b_of_to_plat(struct udevice *dev)
+ {
+ 	struct dwmac_meson8b_plat *pdata = dev_get_plat(dev);
+ 
+-	pdata->regs = (void *)dev_read_addr_index(dev, 1);
+-	if ((fdt_addr_t)pdata->regs == FDT_ADDR_T_NONE)
++	pdata->regs = dev_read_addr_index_ptr(dev, 1);
++	if (!pdata->regs)
+ 		return -EINVAL;
+ 
+ 	pdata->dwmac_setup = (void *)dev_get_driver_data(dev);
+diff --git a/drivers/pci/pcie_dw_meson.c b/drivers/pci/pcie_dw_meson.c
+index 07da9fa533..f953797908 100644
+--- a/drivers/pci/pcie_dw_meson.c
++++ b/drivers/pci/pcie_dw_meson.c
+@@ -337,15 +337,15 @@ static int meson_pcie_parse_dt(struct udevice *dev)
+ 	struct meson_pcie *priv = dev_get_priv(dev);
+ 	int ret;
+ 
+-	priv->dw.dbi_base = (void *)dev_read_addr_index(dev, 0);
++	priv->dw.dbi_base = dev_read_addr_index_ptr(dev, 0);
+ 	if (!priv->dw.dbi_base)
+-		return -ENODEV;
++		return -EINVAL;
+ 
+ 	dev_dbg(dev, "ELBI address is 0x%p\n", priv->dw.dbi_base);
+ 
+-	priv->meson_cfg_base = (void *)dev_read_addr_index(dev, 1);
++	priv->meson_cfg_base = dev_read_addr_index_ptr(dev, 1);
+ 	if (!priv->meson_cfg_base)
+-		return -ENODEV;
++		return -EINVAL;
+ 
+ 	dev_dbg(dev, "CFG address is 0x%p\n", priv->meson_cfg_base);
+ 
+diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
+index 9322e735b9..624ca1cbcb 100644
+--- a/drivers/pci/pcie_dw_rockchip.c
++++ b/drivers/pci/pcie_dw_rockchip.c
+@@ -353,15 +353,15 @@ static int rockchip_pcie_parse_dt(struct udevice *dev)
+ 	struct rk_pcie *priv = dev_get_priv(dev);
+ 	int ret;
+ 
+-	priv->dw.dbi_base = (void *)dev_read_addr_index(dev, 0);
++	priv->dw.dbi_base = dev_read_addr_index_ptr(dev, 0);
+ 	if (!priv->dw.dbi_base)
+-		return -ENODEV;
++		return -EINVAL;
+ 
+ 	dev_dbg(dev, "DBI address is 0x%p\n", priv->dw.dbi_base);
+ 
+-	priv->apb_base = (void *)dev_read_addr_index(dev, 1);
++	priv->apb_base = dev_read_addr_index_ptr(dev, 1);
+ 	if (!priv->apb_base)
+-		return -ENODEV;
++		return -EINVAL;
+ 
+ 	dev_dbg(dev, "APB address is 0x%p\n", priv->apb_base);
+ 
+diff --git a/drivers/watchdog/sbsa_gwdt.c b/drivers/watchdog/sbsa_gwdt.c
+index f43cd3fd2f..96d04665d5 100644
+--- a/drivers/watchdog/sbsa_gwdt.c
++++ b/drivers/watchdog/sbsa_gwdt.c
+@@ -98,13 +98,13 @@ static int sbsa_gwdt_of_to_plat(struct udevice *dev)
+ {
+ 	struct sbsa_gwdt_priv *priv = dev_get_priv(dev);
+ 
+-	priv->reg_control = (void __iomem *)dev_read_addr_index(dev, 0);
+-	if (IS_ERR(priv->reg_control))
+-		return PTR_ERR(priv->reg_control);
++	priv->reg_control = dev_read_addr_index_ptr(dev, 0);
++	if (!priv->reg_control)
++		return -EINVAL;
+ 
+-	priv->reg_refresh = (void __iomem *)dev_read_addr_index(dev, 1);
+-	if (IS_ERR(priv->reg_refresh))
+-		return PTR_ERR(priv->reg_refresh);
++	priv->reg_refresh = dev_read_addr_index_ptr(dev, 1);
++	if (!priv->reg_refresh)
++		return -EINVAL;
+ 
+ 	return 0;
+ }
+-- 
+2.39.2
+

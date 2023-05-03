@@ -1,0 +1,28 @@
+From 90047e799577d44236897f5c01f3fce6e8a05e7d Mon Sep 17 00:00:00 2001
+From: Jon Lin <jon.lin@rock-chips.com>
+Date: Wed, 26 Apr 2023 18:53:13 +0300
+Subject: [PATCH 04/17] pci: pcie_dw_rockchip: Add rk3588 compatible
+
+Add compatible for RK3588 SoC.
+
+Signed-off-by: Jon Lin <jon.lin@rock-chips.com>
+Link: https://patchwork.ozlabs.org/project/uboot/patch/20230426155319.148707-1-eugen.hristev@collabora.com/
+---
+ drivers/pci/pcie_dw_rockchip.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
+index 8b0f0c8707..8ef4d6370f 100644
+--- a/drivers/pci/pcie_dw_rockchip.c
++++ b/drivers/pci/pcie_dw_rockchip.c
+@@ -468,6 +468,7 @@ static const struct dm_pci_ops rockchip_pcie_ops = {
+ 
+ static const struct udevice_id rockchip_pcie_ids[] = {
+ 	{ .compatible = "rockchip,rk3568-pcie" },
++	{ .compatible = "rockchip,rk3588-pcie" },
+ 	{ }
+ };
+ 
+-- 
+2.39.2
+

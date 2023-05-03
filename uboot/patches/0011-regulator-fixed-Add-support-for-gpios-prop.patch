@@ -1,0 +1,42 @@
+From c7f57efc997b7d827afc8bec02d5a8dde0a56aca Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Sat, 22 Apr 2023 18:19:52 +0000
+Subject: [PATCH 11/17] regulator: fixed: Add support for gpios prop
+
+The commit 12df2c182ccb ("regulator: dt-bindings: fixed-regulator: allow
+gpios property") in linux v6.3-rc1 added support for use of either a
+gpios or gpio prop with a fixed-regulator.
+
+This adds support for the new gpios prop to the fixed-regulator driver.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/power/regulator/fixed.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/regulator/fixed.c b/drivers/power/regulator/fixed.c
+index 90004d1601..e921a5984e 100644
+--- a/drivers/power/regulator/fixed.c
++++ b/drivers/power/regulator/fixed.c
+@@ -25,6 +25,7 @@ static int fixed_regulator_of_to_plat(struct udevice *dev)
+ {
+ 	struct dm_regulator_uclass_plat *uc_pdata;
+ 	struct regulator_common_plat *dev_pdata;
++	bool gpios;
+ 
+ 	dev_pdata = dev_get_plat(dev);
+ 	uc_pdata = dev_get_uclass_plat(dev);
+@@ -33,7 +34,9 @@ static int fixed_regulator_of_to_plat(struct udevice *dev)
+ 
+ 	uc_pdata->type = REGULATOR_TYPE_FIXED;
+ 
+-	return regulator_common_of_to_plat(dev, dev_pdata, "gpio");
++	gpios = dev_read_bool(dev, "gpios");
++	return regulator_common_of_to_plat(dev, dev_pdata,
++					   gpios ? "gpios" : "gpio");
+ }
+ 
+ static int fixed_regulator_get_value(struct udevice *dev)
+-- 
+2.39.2
+

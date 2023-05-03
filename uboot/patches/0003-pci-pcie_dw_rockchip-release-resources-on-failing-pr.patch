@@ -1,0 +1,111 @@
+From 99a0b72535915d384cc0a9b8d772a75743f6e901 Mon Sep 17 00:00:00 2001
+From: Eugen Hristev <eugen.hristev@collabora.com>
+Date: Thu, 13 Apr 2023 17:11:03 +0300
+Subject: [PATCH 03/17] pci: pcie_dw_rockchip: release resources on failing
+ probe
+
+Implement a resource release mechanism on failing probe.
+Without this, a strange situation can happen e.g. when init port fails,
+or attempting to get the PHY fails, because the gpios have been
+requested first, and if the user tries to do 'pci enum' again, the
+driver will fail with 'can't find reset gpios' even if the gpios are
+there, just because they were blocked by a previous probe attempt.
+It is only natural to release the acquired resources if the probe fails,
+just for consistency if nothing else.
+This way on subsequent probe attempts, the user will get the same error
+message, and not something different that doesn't make sense.
+
+Signed-off-by: Eugen Hristev <eugen.hristev@collabora.com>
+Link: https://patchwork.ozlabs.org/project/uboot/patch/20230413141103.268571-1-eugen.hristev@collabora.com/
+---
+ drivers/pci/pcie_dw_rockchip.c | 41 +++++++++++++++++++++++++---------
+ 1 file changed, 30 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
+index 624ca1cbcb..8b0f0c8707 100644
+--- a/drivers/pci/pcie_dw_rockchip.c
++++ b/drivers/pci/pcie_dw_rockchip.c
+@@ -375,29 +375,39 @@ static int rockchip_pcie_parse_dt(struct udevice *dev)
+ 	ret = reset_get_bulk(dev, &priv->rsts);
+ 	if (ret) {
+ 		dev_err(dev, "Can't get reset: %d\n", ret);
+-		return ret;
++		goto rockchip_pcie_parse_dt_err_reset_get_bulk;
+ 	}
+ 
+ 	ret = clk_get_bulk(dev, &priv->clks);
+ 	if (ret) {
+ 		dev_err(dev, "Can't get clock: %d\n", ret);
+-		return ret;
++		goto rockchip_pcie_parse_dt_err_clk_get_bulk;
+ 	}
+ 
+ 	ret = device_get_supply_regulator(dev, "vpcie3v3-supply",
+ 					  &priv->vpcie3v3);
+ 	if (ret && ret != -ENOENT) {
+ 		dev_err(dev, "failed to get vpcie3v3 supply (ret=%d)\n", ret);
+-		return ret;
++		goto rockchip_pcie_parse_dt_err_supply_regulator;
+ 	}
+ 
+ 	ret = generic_phy_get_by_index(dev, 0, &priv->phy);
+ 	if (ret) {
+ 		dev_err(dev, "failed to get pcie phy (ret=%d)\n", ret);
+-		return ret;
++		goto rockchip_pcie_parse_dt_err_phy_get_by_index;
+ 	}
+ 
+ 	return 0;
++
++rockchip_pcie_parse_dt_err_phy_get_by_index:
++	/* regulators don't need release */
++rockchip_pcie_parse_dt_err_supply_regulator:
++	clk_release_bulk(&priv->clks);
++rockchip_pcie_parse_dt_err_clk_get_bulk:
++	reset_release_bulk(&priv->rsts);
++rockchip_pcie_parse_dt_err_reset_get_bulk:
++	dm_gpio_free(dev, &priv->rst_gpio);
++	return ret;
+ }
+ 
+ /**
+@@ -426,7 +436,7 @@ static int rockchip_pcie_probe(struct udevice *dev)
+ 
+ 	ret = rockchip_pcie_init_port(dev);
+ 	if (ret)
+-		return ret;
++		goto rockchip_pcie_probe_err_init_port;
+ 
+ 	dev_info(dev, "PCIE-%d: Link up (Gen%d-x%d, Bus%d)\n",
+ 		 dev_seq(dev), pcie_dw_get_link_speed(&priv->dw),
+@@ -434,12 +444,21 @@ static int rockchip_pcie_probe(struct udevice *dev)
+ 		 hose->first_busno);
+ 
+ 
+-	return pcie_dw_prog_outbound_atu_unroll(&priv->dw,
+-						PCIE_ATU_REGION_INDEX0,
+-						PCIE_ATU_TYPE_MEM,
+-						priv->dw.mem.phys_start,
+-						priv->dw.mem.bus_start,
+-						priv->dw.mem.size);
++	ret = pcie_dw_prog_outbound_atu_unroll(&priv->dw,
++					       PCIE_ATU_REGION_INDEX0,
++					       PCIE_ATU_TYPE_MEM,
++					       priv->dw.mem.phys_start,
++					       priv->dw.mem.bus_start,
++					       priv->dw.mem.size);
++	if (!ret)
++		return ret;
++
++rockchip_pcie_probe_err_init_port:
++	clk_release_bulk(&priv->clks);
++	reset_release_bulk(&priv->rsts);
++	dm_gpio_free(dev, &priv->rst_gpio);
++
++	return ret;
+ }
+ 
+ static const struct dm_pci_ops rockchip_pcie_ops = {
+-- 
+2.39.2
+
