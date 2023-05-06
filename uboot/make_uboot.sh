@@ -40,17 +40,16 @@ main() {
         git -C u-boot checkout $utag
     fi
 
+    # outputs: idbloader.img, idbloader-spi.img, u-boot.itb
     rm -f idbloader*.img u-boot.itb
     if [ '_inc' != "_$1" ]; then
         make -C u-boot distclean
         make -C u-boot odroid-m1-rk3568_defconfig
     fi
-
-    # outputs: idbloader.img, idbloader-spi.img, u-boot.itb
     make -C u-boot -j$(nproc) BL31=$atf_file ROCKCHIP_TPL=$tpl_file
-    ln -s u-boot/idbloader.img .
-    ln -s u-boot/idbloader-spi.img .
-    ln -s u-boot/u-boot.itb .
+    ln -sf u-boot/idbloader.img .
+    ln -sf u-boot/idbloader-spi.img .
+    ln -sf u-boot/u-boot.itb .
 
     echo "\n${cya}idbloader and u-boot binaries are now ready${rst}"
     echo "\n${cya}copy images to media:${rst}"
