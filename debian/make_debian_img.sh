@@ -419,8 +419,10 @@ script_boot_txt() {
 
     cat <<-EOF
 	# after modifying, run ./mkscr.sh
+
 	part uuid \${devtype} \${devnum}:\${distro_bootpart} uuid
 	setenv bootargs console=ttyS2,1500000 root=PARTUUID=\${uuid} rw rootwait$no_ipv6 earlycon=uart8250,mmio32,0xfe660000
+
 	if load \${devtype} \${devnum}:\${distro_bootpart} \${kernel_addr_r} /boot/vmlinuz; then
 	    if load \${devtype} \${devnum}:\${distro_bootpart} \${fdt_addr_r} /boot/dtb; then
 	        fdt addr \${fdt_addr_r}
