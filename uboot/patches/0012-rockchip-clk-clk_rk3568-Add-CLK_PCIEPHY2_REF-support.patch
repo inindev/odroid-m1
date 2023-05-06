@@ -1,7 +1,7 @@
-From 46e80e6a00ea8226267cc4f5e3249e0f5eab194e Mon Sep 17 00:00:00 2001
+From 4868bc43aa7153d4ab98f28d6843898f49663517 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 22 Apr 2023 18:19:53 +0000
-Subject: [PATCH 12/17] rockchip: clk: clk_rk3568: Add CLK_PCIEPHY2_REF support
+Subject: [PATCH 12/18] rockchip: clk: clk_rk3568: Add CLK_PCIEPHY2_REF support
 
 Add dummy support for the CLK_PCIEPHY2_REF clock.
 

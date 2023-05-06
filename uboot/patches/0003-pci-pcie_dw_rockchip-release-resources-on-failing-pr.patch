@@ -1,7 +1,7 @@
-From 99a0b72535915d384cc0a9b8d772a75743f6e901 Mon Sep 17 00:00:00 2001
+From 9c97f787dffb8d224a30013bdfa3fefa9b1e309d Mon Sep 17 00:00:00 2001
 From: Eugen Hristev <eugen.hristev@collabora.com>
 Date: Thu, 13 Apr 2023 17:11:03 +0300
-Subject: [PATCH 03/17] pci: pcie_dw_rockchip: release resources on failing
+Subject: [PATCH 03/18] pci: pcie_dw_rockchip: release resources on failing
  probe
 
 Implement a resource release mechanism on failing probe.

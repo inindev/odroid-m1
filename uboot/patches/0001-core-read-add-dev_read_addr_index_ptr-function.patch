@@ -1,7 +1,7 @@
-From a4a863f2e9f97d50dd1584ed8b05d3f2b3f8981e Mon Sep 17 00:00:00 2001
+From 993faee6e6d235f78a9cbf3d236ff4637bc6c686 Mon Sep 17 00:00:00 2001
 From: Johan Jonker <jbx6244@gmail.com>
 Date: Mon, 13 Mar 2023 01:31:25 +0100
-Subject: [PATCH 01/17] core: read: add dev_read_addr_index_ptr function
+Subject: [PATCH 01/18] core: read: add dev_read_addr_index_ptr function
 
 Add dev_read_addr_index_ptr function with the
 same functionality as dev_read_addr_index,

@@ -1,7 +1,7 @@
-From 8f91a0037d24ad43716de9294fb1146ece9c730f Mon Sep 17 00:00:00 2001
+From faef6c7e9115c28e050081ebc504a25d27208077 Mon Sep 17 00:00:00 2001
 From: Johan Jonker <jbx6244@gmail.com>
 Date: Mon, 13 Mar 2023 01:31:49 +0100
-Subject: [PATCH 02/17] drivers: use dev_read_addr_index_ptr when cast to
+Subject: [PATCH 02/18] drivers: use dev_read_addr_index_ptr when cast to
  pointer
 
 The fdt_addr_t and phys_addr_t size have been decoupled. A 32bit CPU
