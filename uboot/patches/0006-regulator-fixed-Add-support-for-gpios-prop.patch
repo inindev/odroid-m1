@@ -1,7 +1,7 @@
-From 89fda362a05cef7adcccc3769161020f465931c1 Mon Sep 17 00:00:00 2001
+From 2c93b04d9a81b660cd9e753bc9391b4e21326232 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 22 Apr 2023 18:19:52 +0000
-Subject: [PATCH 11/18] regulator: fixed: Add support for gpios prop
+Subject: [PATCH 06/13] regulator: fixed: Add support for gpios prop
 
 The commit 12df2c182ccb ("regulator: dt-bindings: fixed-regulator: allow
 gpios property") in linux v6.3-rc1 added support for use of either a

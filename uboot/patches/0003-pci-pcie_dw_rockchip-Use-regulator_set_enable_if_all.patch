@@ -1,7 +1,7 @@
-From b0311945f382d8f3aab583e9d822fc2a5ec0e90a Mon Sep 17 00:00:00 2001
+From 918801a6847ac03e97f0b78db3d3e4d77328db69 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 22 Apr 2023 18:19:48 +0000
-Subject: [PATCH 08/18] pci: pcie_dw_rockchip: Use
+Subject: [PATCH 03/13] pci: pcie_dw_rockchip: Use
  regulator_set_enable_if_allowed
 
 The vpcie3v3 regulator is typically a fixed regulator controlled using
@@ -9,15 +9,16 @@ gpio. Change to use enable and disable calls on the regulator instead
 of trying to set a voltage value.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-3-jonas@kwiboo.se/
 ---
  drivers/pci/pcie_dw_rockchip.c | 17 +++++++----------
  1 file changed, 7 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
-index 83737e62bc..1b8a1409f6 100644
+index 88b12f26c0..3a35d08c31 100644
 --- a/drivers/pci/pcie_dw_rockchip.c
 +++ b/drivers/pci/pcie_dw_rockchip.c
-@@ -288,21 +288,16 @@ static int rockchip_pcie_init_port(struct udevice *dev)
+@@ -287,21 +287,16 @@ static int rockchip_pcie_init_port(struct udevice *dev)
  	struct rk_pcie *priv = dev_get_priv(dev);
  
  	/* Set power and maybe external ref clk input */
@@ -44,7 +45,7 @@ index 83737e62bc..1b8a1409f6 100644
  	}
  
  	ret = generic_phy_power_on(&priv->phy);
-@@ -345,6 +340,8 @@ err_power_off_phy:
+@@ -344,6 +339,8 @@ err_power_off_phy:
  	generic_phy_power_off(&priv->phy);
  err_exit_phy:
  	generic_phy_exit(&priv->phy);

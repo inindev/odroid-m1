@@ -1,7 +1,7 @@
-From c20b84e1c78376c69922a6fa799b3067bc793c46 Mon Sep 17 00:00:00 2001
+From 56fb231f06499576b4de8c80dad6c33dad7afde5 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 22 Apr 2023 18:19:49 +0000
-Subject: [PATCH 09/18] pci: pcie_dw_rockchip: Speed up link probe
+Subject: [PATCH 04/13] pci: pcie_dw_rockchip: Speed up link probe
 
 Use a similar pattern and delay values as the linux mainline driver to
 speed up failing when nothing is connected.
@@ -10,15 +10,16 @@ Reduce fail speed from around 5+ seconds down to around one second on a
 Radxa ROCK 3 Model A, where pcie2x1 is probed before pcie3x2 M2 slot.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-4-jonas@kwiboo.se/
 ---
  drivers/pci/pcie_dw_rockchip.c | 68 ++++++++++++++++++----------------
  1 file changed, 37 insertions(+), 31 deletions(-)
 
 diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
-index 1b8a1409f6..82a8b9c96e 100644
+index 3a35d08c31..cb347631fe 100644
 --- a/drivers/pci/pcie_dw_rockchip.c
 +++ b/drivers/pci/pcie_dw_rockchip.c
-@@ -61,9 +61,6 @@ struct rk_pcie {
+@@ -60,9 +60,6 @@ struct rk_pcie {
  #define PCIE_CLIENT_DBG_TRANSITION_DATA	0xffff0000
  #define PCIE_CLIENT_DBF_EN		0xffff0003
  
@@ -28,7 +29,7 @@ index 1b8a1409f6..82a8b9c96e 100644
  static int rk_pcie_read(void __iomem *addr, int size, u32 *val)
  {
  	if ((uintptr_t)addr & (size - 1)) {
-@@ -242,43 +239,46 @@ static int rk_pcie_link_up(struct rk_pcie *priv, u32 cap_speed)
+@@ -241,43 +238,46 @@ static int rk_pcie_link_up(struct rk_pcie *priv, u32 cap_speed)
  	/* DW pre link configurations */
  	rk_pcie_configure(priv, cap_speed);
  
@@ -103,7 +104,7 @@ index 1b8a1409f6..82a8b9c96e 100644
  }
  
  static int rockchip_pcie_init_port(struct udevice *dev)
-@@ -287,6 +287,12 @@ static int rockchip_pcie_init_port(struct udevice *dev)
+@@ -286,6 +286,12 @@ static int rockchip_pcie_init_port(struct udevice *dev)
  	u32 val;
  	struct rk_pcie *priv = dev_get_priv(dev);
  

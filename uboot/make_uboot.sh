@@ -136,6 +136,10 @@ cherry_pick() {
     # mmc: rockchip_sdhci: Limit number of blocks read in a single command
     # https://github.com/u-boot/u-boot/commit/2cc6cde647e2cf61a29f389e8d263bf19672f0f5
     git -C u-boot cherry-pick 2cc6cde647e2cf61a29f389e8d263bf19672f0f5
+
+    # pci: pcie_dw_rockchip: release resources on failing probe
+    # https://github.com/u-boot/u-boot/commit/e04b67a7f4c1c326bf8c9376c0c7ba5ed9e5075d
+    git -C u-boot cherry-pick e04b67a7f4c1c326bf8c9376c0c7ba5ed9e5075d
 }
 
 check_installed() {

@@ -1,7 +1,7 @@
-From 74deea342658526fb3ee1df4d1cd9b9d211b50b4 Mon Sep 17 00:00:00 2001
+From 2b8e8c44e58f594b108a95f8288d38b33841b929 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 22 Apr 2023 18:19:47 +0000
-Subject: [PATCH 07/18] pci: pcie_dw_rockchip: Get config region from reg prop
+Subject: [PATCH 02/13] pci: pcie_dw_rockchip: Get config region from reg prop
 
 Get the config region to use from the reg prop. Also update the
 referenced region index used in comment.
@@ -46,10 +46,10 @@ index 9f8b016d11..74fb6df412 100644
  			dev_err(pci->dev, "invalid flags type!\n");
  		}
 diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
-index 6da618055c..83737e62bc 100644
+index 6155710a9f..88b12f26c0 100644
 --- a/drivers/pci/pcie_dw_rockchip.c
 +++ b/drivers/pci/pcie_dw_rockchip.c
-@@ -366,6 +366,13 @@ static int rockchip_pcie_parse_dt(struct udevice *dev)
+@@ -365,6 +365,13 @@ static int rockchip_pcie_parse_dt(struct udevice *dev)
  
  	dev_dbg(dev, "APB address is 0x%p\n", priv->apb_base);
  
