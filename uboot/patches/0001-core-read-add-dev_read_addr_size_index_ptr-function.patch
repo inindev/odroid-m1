@@ -1,23 +1,21 @@
-From e1f5b8bc4033dcd7aff66c0d3a1ca761d9afbb07 Mon Sep 17 00:00:00 2001
+From 306f6762ad71fc3384cb763dea76125120908d3c Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Thu, 20 Apr 2023 20:26:13 +0000
-Subject: [PATCH 01/13] core: read: add dev_read_addr_size_index_ptr function
+Date: Wed, 17 May 2023 22:53:41 +0000
+Subject: [PATCH 01/20] core: read: add dev_read_addr_size_index_ptr function
 
 Add dev_read_addr_size_index_ptr function with the same functionality as
 dev_read_addr_size_index, but instead a return pointer is given.
 Use map_sysmem() function as cast for the return.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-
-v2:
-- New patch
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  drivers/core/read.c | 11 +++++++++++
  include/dm/read.h   | 21 +++++++++++++++++++++
  2 files changed, 32 insertions(+)
 
 diff --git a/drivers/core/read.c b/drivers/core/read.c
-index e0543bbad5..c7753e32cb 100644
+index e0543bbad5..e525109979 100644
 --- a/drivers/core/read.c
 +++ b/drivers/core/read.c
 @@ -140,6 +140,17 @@ fdt_addr_t dev_read_addr_size_index(const struct udevice *dev, int index,
@@ -25,7 +23,7 @@ index e0543bbad5..c7753e32cb 100644
  }
  
 +void *dev_read_addr_size_index_ptr(const struct udevice *dev, int index,
-+				    fdt_size_t *size)
++				   fdt_size_t *size)
 +{
 +	fdt_addr_t addr = dev_read_addr_size_index(dev, index, size);
 +

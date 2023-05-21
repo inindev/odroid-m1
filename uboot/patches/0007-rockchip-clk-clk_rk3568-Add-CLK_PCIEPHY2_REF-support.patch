@@ -1,12 +1,12 @@
-From 7588f35cc4a8fda0cbfb36d4f8904c8081a35ae2 Mon Sep 17 00:00:00 2001
+From ba7d789315a2f743511d17d6736aa17abadd7a89 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:53 +0000
-Subject: [PATCH 07/13] rockchip: clk: clk_rk3568: Add CLK_PCIEPHY2_REF support
+Date: Wed, 17 May 2023 22:53:46 +0000
+Subject: [PATCH 07/20] rockchip: clk: clk_rk3568: Add CLK_PCIEPHY2_REF support
 
 Add dummy support for the CLK_PCIEPHY2_REF clock.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-7-jonas@kwiboo.se/
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  drivers/clk/rockchip/clk_rk3568.c | 1 +
  1 file changed, 1 insertion(+)

@@ -1,16 +1,13 @@
-From 2b8e8c44e58f594b108a95f8288d38b33841b929 Mon Sep 17 00:00:00 2001
+From b32fc740dcf2183ad7af5de94aa3dea439d12495 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:47 +0000
-Subject: [PATCH 02/13] pci: pcie_dw_rockchip: Get config region from reg prop
+Date: Wed, 17 May 2023 22:53:42 +0000
+Subject: [PATCH 02/20] pci: pcie_dw_rockchip: Get config region from reg prop
 
 Get the config region to use from the reg prop. Also update the
 referenced region index used in comment.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-2-jonas@kwiboo.se/
-
-v2:
-- Use dev_read_addr_size_index_ptr
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  drivers/pci/pcie_dw_common.c   | 10 ++++++----
  drivers/pci/pcie_dw_rockchip.c |  7 +++++++

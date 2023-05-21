@@ -40,15 +40,14 @@ main() {
         git -C u-boot checkout $utag
     fi
 
-    # outputs: idbloader.img, idbloader-spi.img, u-boot.itb
-    rm -f idbloader*.img u-boot.itb
+    # outputs: idbloader.img, u-boot.itb
+    rm -f idbloader.img u-boot.itb
     if [ '_inc' != "_$1" ]; then
         make -C u-boot distclean
         make -C u-boot odroid-m1-rk3568_defconfig
     fi
     make -C u-boot -j$(nproc) BL31=$atf_file ROCKCHIP_TPL=$tpl_file
     ln -sf u-boot/idbloader.img .
-    ln -sf u-boot/idbloader-spi.img .
     ln -sf u-boot/u-boot.itb .
 
     echo "\n${cya}idbloader and u-boot binaries are now ready${rst}"
@@ -57,10 +56,16 @@ main() {
     echo "  ${cya}sudo dd bs=4K seek=2048 if=u-boot.itb of=/dev/sdX conv=notrunc,fsync${rst}"
     echo
     echo "${blu}optionally, flash to spi (apt install mtd-utils):${rst}"
-    echo "  ${blu}flash_erase /dev/mtd0 0 0${rst}"
-    echo "  ${blu}nandwrite /dev/mtd0 idbloader-spi.img${rst}"
-    echo "  ${blu}flash_erase /dev/mtd2 0 0${rst}"
-    echo "  ${blu}nandwrite /dev/mtd2 u-boot.itb${rst}"
+    echo
+    echo "  ${blu}purge petitboot:${rst}"
+    echo "    ${blu}sudo flash_erase /dev/mtd0 0 0${rst}"
+    echo "    ${blu}sudo flash_erase /dev/mtd1 0 0${rst}"
+    echo "    ${blu}sudo flash_erase /dev/mtd2 0 0${rst}"
+    echo "    ${blu}sudo flash_erase /dev/mtd3 0 0${rst}"
+    echo
+    echo "  ${blu}flash u-boot to spi:${rst}"
+    echo "    ${blu}sudo flashcp -v idbloader.img /dev/mtd0${rst}"
+    echo "    ${blu}sudo flashcp -v u-boot.itb /dev/mtd2${rst}"
     echo
 }
 

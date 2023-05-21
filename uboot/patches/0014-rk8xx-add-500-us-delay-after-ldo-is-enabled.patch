@@ -1,7 +1,7 @@
-From 0e62d6a458a5db571e503ddba009c3af61c20c1a Mon Sep 17 00:00:00 2001
+From ed7a48faa8aa86bf5dacffdf191ce2a5f3ea7916 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 18 Apr 2023 21:55:18 +0000
-Subject: [PATCH 09/13] rk8xx: add 500 us delay after ldo is enabled
+Subject: [PATCH 14/20] rk8xx: add 500 us delay after ldo is enabled
 
 A quick power cycle of a ldo regulator during dwmmc voltage change has
 shown that SD-card is not always recogniced.

@@ -1,7 +1,7 @@
-From 56fb231f06499576b4de8c80dad6c33dad7afde5 Mon Sep 17 00:00:00 2001
+From e335f8735b0d2f9754d5e846cd297ac5c141f1c9 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:49 +0000
-Subject: [PATCH 04/13] pci: pcie_dw_rockchip: Speed up link probe
+Date: Wed, 17 May 2023 22:53:43 +0000
+Subject: [PATCH 04/20] pci: pcie_dw_rockchip: Speed up link probe
 
 Use a similar pattern and delay values as the linux mainline driver to
 speed up failing when nothing is connected.
@@ -10,7 +10,7 @@ Reduce fail speed from around 5+ seconds down to around one second on a
 Radxa ROCK 3 Model A, where pcie2x1 is probed before pcie3x2 M2 slot.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-4-jonas@kwiboo.se/
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  drivers/pci/pcie_dw_rockchip.c | 68 ++++++++++++++++++----------------
  1 file changed, 37 insertions(+), 31 deletions(-)

@@ -1,16 +1,50 @@
-From ce5bdfe335cc489b270dad71f839da35c8f5c7e8 Mon Sep 17 00:00:00 2001
+From 55f17aa3b632d48a330ce3c51e35318f7b3c2bb6 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:50 +0000
-Subject: [PATCH 05/13] pci: pcie_dw_rockchip: Hide BARs of the root complex
+Date: Wed, 17 May 2023 22:53:44 +0000
+Subject: [PATCH 05/20] pci: pcie_dw_rockchip: Hide BARs of the root complex
 
 PCI Autoconfig read the Root Complex BARs and try to claim the entire
 1 GiB memory region on RK3568, leaving no space for any attached device.
+
+With a memory region less than 1 GiB this was not a real issue:
+
+  PCI Autoconfig: Bus Memory region: [0-3eefffff],
+  PCI Autoconfig: Bus I/O region: [3ef00000-3effffff],
+  PCI Autoconfig: Found P2P bridge, device 0
+  PCI Autoconfig: BAR 0, Mem, size=0x40000000, No room in resource, avail start=1000 / size=3ef00000, need=40000000
+  PCI: Failed autoconfig bar 10
+  PCI Autoconfig: BAR 1, Mem, size=0x40000000, No room in resource, avail start=1000 / size=3ef00000, need=40000000
+  PCI: Failed autoconfig bar 14
+  PCI Autoconfig: ROM, size=0x10000, address=0x10000 bus_lower=0x20000
+
+  PCI Autoconfig: BAR 0, Mem64, size=0x4000, address=0x100000 bus_lower=0x104000
+
+With a memory region of the entire 1 GiB this leads to:
+
+  PCI Autoconfig: Bus Memory region: [40000000-7fffffff],
+  PCI Autoconfig: Bus I/O region: [f0100000-f01fffff],
+  PCI Autoconfig: Found P2P bridge, device 0
+  PCI Autoconfig: BAR 0, Mem, size=0x40000000, address=0x40000000 bus_lower=0x80000000
+  PCI Autoconfig: BAR 1, Mem, size=0x40000000, No room in resource, avail start=80000000 / size=40000000, need=40000000
+  PCI: Failed autoconfig bar 14
+  PCI Autoconfig: ROM, size=0x10000, No room in resource, avail start=80000000 / size=40000000, need=10000
+
+  PCI Autoconfig: BAR 0, Mem64, size=0x4000, No room in resource, avail start=80000000 / size=40000000, need=4000
+  PCI: Failed autoconfig bar 10
+
+After this change with a memory region of the entire 1 GiB:
+
+  PCI Autoconfig: Bus Memory region: [40000000-7fffffff],
+  PCI Autoconfig: Bus I/O region: [f0100000-f01fffff],
+  PCI Autoconfig: Found P2P bridge, device 0
+  PCI Autoconfig: ROM, size=0x10000, address=0x40000000 bus_lower=0x40010000
+
+  PCI Autoconfig: BAR 0, Mem64, size=0x4000, address=0x40100000 bus_lower=0x40104000
 
 Return an invalid value during config read of Root Complex BARs during
 autoconfig to work around such issue.
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-5-jonas@kwiboo.se/
 ---
  drivers/pci/pcie_dw_rockchip.c | 28 +++++++++++++++++++++++++++-
  1 file changed, 27 insertions(+), 1 deletion(-)

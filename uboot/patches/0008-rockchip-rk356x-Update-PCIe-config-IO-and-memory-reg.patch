@@ -1,16 +1,26 @@
-From e37475ea19a9e5c7b478848f391524ae532895f0 Mon Sep 17 00:00:00 2001
+From 20afe662de0e02dfcdd83541edc5bd93418c29eb Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:56 +0000
-Subject: [PATCH 08/13] rockchip: rk356x: Update PCIe config, IO and memory
+Date: Wed, 17 May 2023 22:53:49 +0000
+Subject: [PATCH 08/20] rockchip: rk356x: Update PCIe config, IO and memory
  regions
 
 Update config, IO and memory regions used based on [1] with pcie3x2
-config reg size corrected from 16 to 1 MiB.
+config reg address and reg size corrected.
+
+Before this change:
+
+  PCI Autoconfig: Bus Memory region: [0-3eefffff],
+  PCI Autoconfig: Bus I/O region: [3ef00000-3effffff],
+
+After this change:
+
+  PCI Autoconfig: Bus Memory region: [40000000-7fffffff],
+  PCI Autoconfig: Bus I/O region: [f0100000-f01fffff],
 
 [1] https://lore.kernel.org/lkml/20221112114125.1637543-2-aholmes@omnom.net/
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-9-jonas@kwiboo.se/
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  arch/arm/dts/rk3568.dtsi | 14 ++++++++------
  arch/arm/dts/rk356x.dtsi |  7 ++++---

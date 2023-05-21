@@ -1,15 +1,20 @@
-From 918801a6847ac03e97f0b78db3d3e4d77328db69 Mon Sep 17 00:00:00 2001
+From f13fc40993ba7f9f3334941fa3e55f16c1e00cc8 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sat, 22 Apr 2023 18:19:48 +0000
-Subject: [PATCH 03/13] pci: pcie_dw_rockchip: Use
+Date: Wed, 17 May 2023 22:53:42 +0000
+Subject: [PATCH 03/20] pci: pcie_dw_rockchip: Use
  regulator_set_enable_if_allowed
 
 The vpcie3v3 regulator is typically a fixed regulator controlled using
 gpio. Change to use enable and disable calls on the regulator instead
 of trying to set a voltage value.
 
+Also remove the delay to match linux driver, for a fixed regulator the
+startup-delay-us prop can be used in case a startup delay is needed.
+Limited testing on ROCK 3A, ROCK 5B, Quartz64, Odroid-M1 has shown that
+this delay was not needed.
+
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
-Link: https://patchwork.ozlabs.org/project/uboot/patch/20230422181943.889436-3-jonas@kwiboo.se/
+Reviewed-by: Kever Yang <kever.yang@rock-chips.com>
 ---
  drivers/pci/pcie_dw_rockchip.c | 17 +++++++----------
  1 file changed, 7 insertions(+), 10 deletions(-)
