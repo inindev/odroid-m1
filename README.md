@@ -1,9 +1,9 @@
 # odroid-m1
 #### *Stock Debian ARM64 Linux for the ODROID-M1*
 
-This stock Debian ARM64 Linux image is built directly from official packages using the official Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L92
+This stock Debian ARM64 Linux image is built directly from official packages using the official Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L105
 
-Being an official unmodified Debian build, patches are directory available from the Debian repos using the stock **apt** package manager, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L327
+Being an official unmodified Debian build, patches are directory available from the Debian repos using the stock **apt** package manager, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L343
 
 If you want to run true up-stream Debian Linux on your ARM64 device, this is the way to do it.
 
@@ -16,7 +16,7 @@ If you want to run true up-stream Debian Linux on your ARM64 device, this is the
 
 **1. download image**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0-rc3/odroidm1_12.0-rc3.img.xz
+wget https://github.com/inindev/odroid-m1/releases/download/v12-rc4/odroid-m1_bookworm-rc4.img.xz
 ```
 
 <br/>
@@ -32,7 +32,7 @@ ls: cannot access '/dev/sd*': No such file or directory
  * after plugging-in device
 ```
 ls -l /dev/sd*
-brw-rw---- 1 root disk 8, 0 Jul 20 18:44 /dev/sda
+brw-rw---- 1 root disk 8, 0 Apr 10 15:56 /dev/sda
 ```
 * note: for mac, the device is ```/dev/rdiskX```
 
@@ -40,7 +40,7 @@ brw-rw---- 1 root disk 8, 0 Jul 20 18:44 /dev/sda
 
 **3. in the case above, substitute 'a' for 'X' in the command below (for /dev/sda)**
 ```
-sudo sh -c 'xzcat odroidm1_12.0-rc2.img.xz > /dev/sdX && sync'
+sudo sh -c 'xzcat odroid-m1_bookworm-rc4.img.xz > /dev/sdX && sync'
 ```
 
 #### when the micro sd has finished imaging, eject and use it to boot the odroid m1 to finish setup
@@ -93,6 +93,22 @@ sudo nano /etc/hosts
 
 <br/>
 
+---
+### installing on m.2 ssd /dev/nvme0n1 media
+
+<br/>
+
+**1. while booted from mmc, downloaf and copy the image file on to the ssd media**
+```
+wget https://github.com/inindev/odroid-m1/releases/download/v12-rc4/odroid-m1_bookworm-rc4.img.xz
+sudo sh -c 'xzcat odroid-m1_bookworm-rc4.img.xz > /dev/nvme0n1 && sync'
+```
+
+<br/>
+
+**2. remove mmc media and reboot**
+
+<br/>
 
 ---
 ### building debian bookworm arm64 for the odroid m1 from scratch
@@ -125,60 +141,6 @@ sudo sh make_debian_img.sh
 **3. the output if the build completes successfully**
 ```
 mmc_2g.img.xz
-```
-
-<br/>
-
-
----
-### installing on m.2 ssd /dev/nvme0n1 media
-
-<br/>
-
-**1. copy the image file on to the ssd media (root user required)**
-```
-xzcat odroidm1_12.0-rc3.img.xz > /dev/nvme0n1
-```
-
-<br/>
-
-**2. remove mmc media and boot from petitboot**
-
-<br/>
-
-
----
-### determining partition uuid
-
-<br/>
-
-**the partition uuid is required for the boot script /boot/boot.txt**
-```
-fdisk /dev/nvme0n1
-
-select command i
-
-Selected partition 1
-         Device: /dev/nvme0n1p1
-          Start: 32768
-            End: 976773119
-        Sectors: 976740352
-           Size: 465.7G
-           Type: Linux filesystem
-      Type-UUID: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
-           UUID: 48432519-7258-4785-977e-3b1d26d88169
-           Name: rootfs
-
-select command q to exit
-
-```
-
-<br/>
-
-**place the uuid in the /boot/boot.txt build script and regenerate**
-```
-setenv bootargs console=ttyS2,1500000 root=PARTUUID=48432519-7258-4785-977e-3b1d26d88169 rw rootwait...
-./mkscr.sh
 ```
 
 <br/>

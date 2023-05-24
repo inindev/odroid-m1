@@ -7,8 +7,8 @@ set -e
 #   5: invalid file hash
 
 main() {
-    local linux='https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.2.9.tar.xz'
-    local lxsha='903449c164c03f0e742aacc920e18563585e07a28c6cb79e0fd6c36695fd43f5'
+    local linux='https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.3.1.tar.xz'
+    local lxsha='78620fb4a7d5e0db1d4eb8d5b1c6e207ba5d19564efa63967a59b6daf89b3f2a'
 
     local lf=$(basename $linux)
     local lv=$(echo $lf | sed -nE 's/linux-(.*)\.tar\..z/\1/p')
@@ -24,7 +24,7 @@ main() {
 
     [ -f $lf ] || wget $linux
 
-    if [ $lxsha != $(sha256sum $lf | cut -c1-64) ]; then
+    if [ _$lxsha != _$(sha256sum $lf | cut -c1-64) ]; then
         echo "invalid hash for linux source file: $lf"
         exit 5
     fi
@@ -34,7 +34,7 @@ main() {
         tar xavf $lf linux-$lv/include/dt-bindings linux-$lv/include/uapi $rkpath
     fi
 
-    if [ '_links' = "_$1" ]; then
+    if [ _links = _$1 ]; then
         ln -sfv $rkpath/rk3568-pinctrl.dtsi
         ln -sfv $rkpath/rk356x.dtsi
         ln -sfv $rkpath/rk3568.dtsi
