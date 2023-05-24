@@ -7,8 +7,8 @@ set -e
 #   5: invalid file hash
 
 main() {
-    local linux='https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.3.1.tar.xz'
-    local lxsha='78620fb4a7d5e0db1d4eb8d5b1c6e207ba5d19564efa63967a59b6daf89b3f2a'
+    local linux='https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.3.3.tar.xz'
+    local lxsha='8975216a6cee827390586758ed69d19743367098d1fc5dd5694987bb529e44e5'
 
     local lf=$(basename $linux)
     local lv=$(echo $lf | sed -nE 's/linux-(.*)\.tar\..z/\1/p')
