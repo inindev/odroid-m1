@@ -114,7 +114,9 @@ main() {
     # disable sshd until after keys are regenerated on first boot
     rm -f "$mountpt/etc/systemd/system/sshd.service"
     rm -f "$mountpt/etc/systemd/system/multi-user.target.wants/ssh.service"
+    rm -f "$mountpt/etc/ssh/ssh_host_"*
 
+    rm -f "$mountpt/etc/machine.id"
     rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
     echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
     cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
@@ -393,18 +395,16 @@ script_rc_local() {
 	    rm "\$this"
 	else
 	    # regen ssh keys
-	    rm -f /etc/ssh/ssh_host_*
 	    dpkg-reconfigure openssh-server
-            systemctl enable ssh.service
+	    systemctl enable ssh.service
 
-	    # expand root parition
+	    # expand root parition & change uuid
 	    rp=\$(findmnt / -o source -n)
 	    rpn=\$(echo "\$rp" | grep -o '[[:digit:]]*\$')
-	    rd="/dev/\$(lsblk -no pkname \$rp)"
-	    echo ', +' | sfdisk -f -N \$rpn \$rd
-
-	    # change uuid on partition
+	    rd=/dev/\$(lsblk -no pkname \$rp)
 	    uuid=\$(cat /proc/sys/kernel/random/uuid)
+	    echo "size=+, uuid=\$uuid" | sfdisk -f -N \$rpn \$rd
+
 	    sfdisk --part-uuid \$rd \$rpn \$uuid
 
 	    # setup for expand fs
