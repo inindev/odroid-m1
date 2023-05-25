@@ -393,6 +393,7 @@ script_rc_local() {
 	    # expand fs
 	    resize2fs \$(findmnt / -o source -n)
 	    rm "\$this"
+	    systemctl stop rc-local.service
 	else
 	    # regen ssh keys
 	    dpkg-reconfigure openssh-server
