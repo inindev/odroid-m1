@@ -157,13 +157,8 @@ main() {
     chroot "$mountpt" /usr/bin/passwd -e $acct_uid
     (umask 377 && echo "$acct_uid ALL=(ALL) NOPASSWD: ALL" > "$mountpt/etc/sudoers.d/$acct_uid")
 
-    # when compressing, reduce entropy in free space to enhance compression
-    if $compress; then
-        print_hdr "removing entropy before compression"
-        cat /dev/zero > "$mountpt/tmp/zero.bin" 2> /dev/null || true
-        sync
-        rm -f "$mountpt/tmp/zero.bin"
-    fi
+    # reduce entropy on non-block media
+    [ -b "$media" ] || fstrim -v "$mountpt"
 
     umount "$mountpt"
     rm -rf "$mountpt"
