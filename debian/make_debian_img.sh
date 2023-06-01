@@ -20,7 +20,7 @@ main() {
     local disable_ipv6=true
     local extra_pkgs='curl, pciutils, sudo, u-boot-tools, unzip, wget, xxd, xz-utils, zip, zstd'
 
-    is_param 'clean' $@ && rm -rf cache.* && rm mmc_2g.img* && exit 0
+    is_param 'clean' $@ && rm -rf cache.* && rm "$media"* && exit 0
 
     if [ -f "$media" ]; then
         read -p "file $media exists, overwrite? <y/N> " yn
@@ -187,8 +187,7 @@ make_image_file() {
     local filename="$1"
     rm -f "$filename"*
     local size="$(echo "$filename" | sed -rn 's/.*mmc_([[:digit:]]+[m|g])\.img$/\1/p')"
-    local bytes="$(echo "$size" | sed -e 's/g/ << 30/' -e 's/m/ << 20/')"
-    dd bs=64K count=$(($bytes >> 16)) if=/dev/zero of="$filename" status=progress
+    truncate -s $size "$filename"
 }
 
 parition_media() {
@@ -400,8 +399,6 @@ script_rc_local() {
 	    rd=/dev/\$(lsblk -no pkname \$rp)
 	    uuid=\$(cat /proc/sys/kernel/random/uuid)
 	    echo "size=+, uuid=\$uuid" | sfdisk -f -N \$rpn \$rd
-
-	    sfdisk --part-uuid \$rd \$rpn \$uuid
 
 	    # setup for expand fs
 	    chmod 774 "\$this"
