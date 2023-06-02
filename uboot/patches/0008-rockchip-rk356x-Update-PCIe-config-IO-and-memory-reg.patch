@@ -1,7 +1,7 @@
-From 20afe662de0e02dfcdd83541edc5bd93418c29eb Mon Sep 17 00:00:00 2001
+From 234972dbc1d4ebfaa48d5db3312074d3f130feb4 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 17 May 2023 22:53:49 +0000
-Subject: [PATCH 08/20] rockchip: rk356x: Update PCIe config, IO and memory
+Subject: [PATCH 08/16] rockchip: rk356x: Update PCIe config, IO and memory
  regions
 
 Update config, IO and memory regions used based on [1] with pcie3x2

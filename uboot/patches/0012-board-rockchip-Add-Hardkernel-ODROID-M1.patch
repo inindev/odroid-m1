@@ -1,7 +1,7 @@
-From 902dc95d0c0c841cca7bcba49d3acdb98367ff78 Mon Sep 17 00:00:00 2001
+From 182a2a9c0d99cc9a211260423712995fd7ba1ab2 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 19 Mar 2023 12:36:40 +0000
-Subject: [PATCH 16/20] board: rockchip: Add Hardkernel ODROID-M1
+Subject: [PATCH 12/16] board: rockchip: Add Hardkernel ODROID-M1
 
 Tested on a ODROID-M1 8GB v1.0 2022-06-13:
 - SD-card boot

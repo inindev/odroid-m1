@@ -1,7 +1,7 @@
-From 37abdaec0022385f74bcbf56b9ac5617b90b0e4c Mon Sep 17 00:00:00 2001
+From 76badff1da1c4c3f9187b24d5f129b3a96b5e08d Mon Sep 17 00:00:00 2001
 From: John Clark <inindev@gmail.com>
 Date: Sun, 21 May 2023 09:33:22 -0400
-Subject: [PATCH 19/20] round-up on spi read size
+Subject: [PATCH 15/16] round-up on spi read size
 
 Signed-off-by: John Clark <inindev@gmail.com>
 ---

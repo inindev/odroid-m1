@@ -1,7 +1,7 @@
-From 5bb5aea12ae638425ed490a66ca92c16a4b85e8c Mon Sep 17 00:00:00 2001
+From 8aa123535d098039426dd41c5890f4216807464a Mon Sep 17 00:00:00 2001
 From: John Clark <inindev@gmail.com>
 Date: Sun, 21 May 2023 17:53:40 -0400
-Subject: [PATCH 17/20] patch for u-boot v2023.04 spi mode quad read
+Subject: [PATCH 13/16] patch for u-boot v2023.04 spi mode quad read
 
 Signed-off-by: John Clark <inindev@gmail.com>
 ---

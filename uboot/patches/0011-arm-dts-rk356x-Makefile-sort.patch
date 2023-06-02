@@ -1,7 +1,7 @@
-From c58f7203d2bcb7f2b7ebb9c748bad5e64d9da942 Mon Sep 17 00:00:00 2001
+From 16fb2a3de3f11a054af4a281e5fd2525e3f368fb Mon Sep 17 00:00:00 2001
 From: FUKAUMI Naoki <naoki@radxa.com>
 Date: Sat, 8 Apr 2023 09:33:42 +0000
-Subject: [PATCH 15/20] arm: dts: rk356x: Makefile: sort
+Subject: [PATCH 11/16] arm: dts: rk356x: Makefile: sort
 
 sort alphanumerically.
 
