@@ -63,8 +63,8 @@ sudo flash_erase /dev/mtd3 0 0
 
 **4. write u-boot to spi flash**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12-rc4/idbloader.img
-wget https://github.com/inindev/odroid-m1/releases/download/v12-rc4/u-boot.itb
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0/idbloader.img
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0/u-boot.itb
 sudo flashcp -v idbloader.img /dev/mtd0
 sudo flashcp -v u-boot.itb /dev/mtd2
 ```
