@@ -1,0 +1,165 @@
+From 48ae98c5175a37b98694ae6c0a88c8f15c69dda2 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Sun, 2 Jul 2023 17:34:36 +0000
+Subject: [PATCH 17/26] rockchip: rk356x: Sync dtsi from linux v6.4
+
+Sync rk356x.dtsi from linux v6.4.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ arch/arm/dts/rk3568-pinctrl.dtsi | 94 ++++++++++++++++++++++++++++++++
+ arch/arm/dts/rk356x.dtsi         | 14 +++--
+ 2 files changed, 102 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm/dts/rk3568-pinctrl.dtsi b/arch/arm/dts/rk3568-pinctrl.dtsi
+index 8f90c66dd9..0a979bfb63 100644
+--- a/arch/arm/dts/rk3568-pinctrl.dtsi
++++ b/arch/arm/dts/rk3568-pinctrl.dtsi
+@@ -3117,4 +3117,98 @@
+ 				<0 RK_PA1 0 &pcfg_pull_none>;
+ 		};
+ 	};
++
++	lcdc {
++		/omit-if-no-ref/
++		lcdc_clock: lcdc-clock {
++			rockchip,pins =
++				/* lcdc_clk */
++				<3 RK_PA0 1 &pcfg_pull_none>,
++				/* lcdc_den */
++				<3 RK_PC3 1 &pcfg_pull_none>,
++				/* lcdc_hsync */
++				<3 RK_PC1 1 &pcfg_pull_none>,
++				/* lcdc_vsync */
++				<3 RK_PC2 1 &pcfg_pull_none>;
++		};
++
++		/omit-if-no-ref/
++		lcdc_data16: lcdc-data16 {
++			rockchip,pins =
++				/* lcdc_d3 */
++				<2 RK_PD3 1 &pcfg_pull_none>,
++				/* lcdc_d4 */
++				<2 RK_PD4 1 &pcfg_pull_none>,
++				/* lcdc_d5 */
++				<2 RK_PD5 1 &pcfg_pull_none>,
++				/* lcdc_d6 */
++				<2 RK_PD6 1 &pcfg_pull_none>,
++				/* lcdc_d7 */
++				<2 RK_PD7 1 &pcfg_pull_none>,
++				/* lcdc_d10 */
++				<3 RK_PA3 1 &pcfg_pull_none>,
++				/* lcdc_d11 */
++				<3 RK_PA4 1 &pcfg_pull_none>,
++				/* lcdc_d12 */
++				<3 RK_PA5 1 &pcfg_pull_none>,
++				/* lcdc_d13 */
++				<3 RK_PA6 1 &pcfg_pull_none>,
++				/* lcdc_d14 */
++				<3 RK_PA7 1 &pcfg_pull_none>,
++				/* lcdc_d15 */
++				<3 RK_PB0 1 &pcfg_pull_none>,
++				/* lcdc_d19 */
++				<3 RK_PB4 1 &pcfg_pull_none>,
++				/* lcdc_d20 */
++				<3 RK_PB5 1 &pcfg_pull_none>,
++				/* lcdc_d21 */
++				<3 RK_PB6 1 &pcfg_pull_none>,
++				/* lcdc_d22 */
++				<3 RK_PB7 1 &pcfg_pull_none>,
++				/* lcdc_d23 */
++				<3 RK_PC0 1 &pcfg_pull_none>;
++		};
++
++		/omit-if-no-ref/
++		lcdc_data18: lcdc-data18 {
++			rockchip,pins =
++				/* lcdc_d2 */
++				<2 RK_PD2 1 &pcfg_pull_none>,
++				/* lcdc_d3 */
++				<2 RK_PD3 1 &pcfg_pull_none>,
++				/* lcdc_d4 */
++				<2 RK_PD4 1 &pcfg_pull_none>,
++				/* lcdc_d5 */
++				<2 RK_PD5 1 &pcfg_pull_none>,
++				/* lcdc_d6 */
++				<2 RK_PD6 1 &pcfg_pull_none>,
++				/* lcdc_d7 */
++				<2 RK_PD7 1 &pcfg_pull_none>,
++				/* lcdc_d10 */
++				<3 RK_PA3 1 &pcfg_pull_none>,
++				/* lcdc_d11 */
++				<3 RK_PA4 1 &pcfg_pull_none>,
++				/* lcdc_d12 */
++				<3 RK_PA5 1 &pcfg_pull_none>,
++				/* lcdc_d13 */
++				<3 RK_PA6 1 &pcfg_pull_none>,
++				/* lcdc_d14 */
++				<3 RK_PA7 1 &pcfg_pull_none>,
++				/* lcdc_d15 */
++				<3 RK_PB0 1 &pcfg_pull_none>,
++				/* lcdc_d18 */
++				<3 RK_PB3 1 &pcfg_pull_none>,
++				/* lcdc_d19 */
++				<3 RK_PB4 1 &pcfg_pull_none>,
++				/* lcdc_d20 */
++				<3 RK_PB5 1 &pcfg_pull_none>,
++				/* lcdc_d21 */
++				<3 RK_PB6 1 &pcfg_pull_none>,
++				/* lcdc_d22 */
++				<3 RK_PB7 1 &pcfg_pull_none>,
++				/* lcdc_d23 */
++				<3 RK_PC0 1 &pcfg_pull_none>;
++		};
++	};
++
+ };
+diff --git a/arch/arm/dts/rk356x.dtsi b/arch/arm/dts/rk356x.dtsi
+index e0591c194b..61680c7ac4 100644
+--- a/arch/arm/dts/rk356x.dtsi
++++ b/arch/arm/dts/rk356x.dtsi
+@@ -422,8 +422,9 @@
+ 		clock-names = "xin24m";
+ 		#clock-cells = <1>;
+ 		#reset-cells = <1>;
+-		assigned-clocks = <&cru PLL_GPLL>, <&pmucru PLL_PPLL>;
+-		assigned-clock-rates = <1200000000>, <200000000>;
++		assigned-clocks = <&pmucru CLK_RTC_32K>, <&cru PLL_GPLL>, <&pmucru PLL_PPLL>;
++		assigned-clock-rates = <32768>, <1200000000>, <200000000>;
++		assigned-clock-parents = <&pmucru CLK_RTC32K_FRAC>;
+ 		rockchip,grf = <&grf>;
+ 	};
+ 
+@@ -743,8 +744,8 @@
+ 		compatible = "rockchip,rk3568-mipi-dsi", "snps,dw-mipi-dsi";
+ 		reg = <0x00 0xfe060000 0x00 0x10000>;
+ 		interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+-		clock-names = "pclk", "hclk";
+-		clocks = <&cru PCLK_DSITX_0>, <&cru HCLK_VO>;
++		clock-names = "pclk";
++		clocks = <&cru PCLK_DSITX_0>;
+ 		phy-names = "dphy";
+ 		phys = <&dsi_dphy0>;
+ 		power-domains = <&power RK3568_PD_VO>;
+@@ -771,8 +772,8 @@
+ 		compatible = "rockchip,rk3568-mipi-dsi", "snps,dw-mipi-dsi";
+ 		reg = <0x0 0xfe070000 0x0 0x10000>;
+ 		interrupts = <GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>;
+-		clock-names = "pclk", "hclk";
+-		clocks = <&cru PCLK_DSITX_1>, <&cru HCLK_VO>;
++		clock-names = "pclk";
++		clocks = <&cru PCLK_DSITX_1>;
+ 		phy-names = "dphy";
+ 		phys = <&dsi_dphy1>;
+ 		power-domains = <&power RK3568_PD_VO>;
+@@ -966,6 +967,7 @@
+ 		clock-names = "aclk_mst", "aclk_slv",
+ 			      "aclk_dbi", "pclk", "aux";
+ 		device_type = "pci";
++		#interrupt-cells = <1>;
+ 		interrupt-map-mask = <0 0 0 7>;
+ 		interrupt-map = <0 0 0 1 &pcie_intc 0>,
+ 				<0 0 0 2 &pcie_intc 1>,
+-- 
+2.40.1
+

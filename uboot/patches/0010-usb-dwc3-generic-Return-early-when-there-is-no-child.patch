@@ -1,0 +1,34 @@
+From fe90079ff8ff9b9edb6e3b73c22e440f9e892015 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Tue, 30 May 2023 10:26:22 +0000
+Subject: [PATCH 10/26] usb: dwc3-generic: Return early when there is no child
+ node
+
+The call to device_find_first_child always return 0, change to return
+early when there is no child node.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/usb/dwc3/dwc3-generic.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-generic.c b/drivers/usb/dwc3/dwc3-generic.c
+index 66da5a8d6f..c28ad47bdd 100644
+--- a/drivers/usb/dwc3/dwc3-generic.c
++++ b/drivers/usb/dwc3/dwc3-generic.c
+@@ -558,9 +558,9 @@ int dwc3_glue_probe(struct udevice *dev)
+ 			return ret;
+ 	}
+ 
+-	ret = device_find_first_child(dev, &child);
+-	if (ret)
+-		return ret;
++	device_find_first_child(dev, &child);
++	if (!child)
++		return 0;
+ 
+ 	if (glue->clks.count == 0) {
+ 		ret = dwc3_glue_clk_init(child, glue);
+-- 
+2.40.1
+

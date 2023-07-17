@@ -1,0 +1,47 @@
+From 33e144bf1fd3db51c7ed812e75b507fca091d501 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Tue, 30 May 2023 10:26:23 +0000
+Subject: [PATCH 11/26] usb: dwc3-generic: Relax unsupported dr_mode check
+
+When dr_mode is peripheral or otg and U-Boot has not been built with
+DM_USB_GADGET support, booting such device may end up with:
+
+  dwc3_glue_bind_common: subnode name: usb@fcc00000
+  Error binding driver 'dwc3-generic-wrapper': -6
+  Some drivers failed to bind
+  initcall sequence 00000000effbca08 failed at call 0000000000a217c8 (err=-6)
+  ### ERROR ### Please RESET the board ###
+
+Instead fail gracfully with ENODEV to allow board continue booting.
+
+  dwc3_glue_bind_common: subnode name: usb@fcc00000
+  dwc3_glue_bind_common: unsupported dr_mode
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/usb/dwc3/dwc3-generic.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-generic.c b/drivers/usb/dwc3/dwc3-generic.c
+index c28ad47bdd..f7859a5302 100644
+--- a/drivers/usb/dwc3/dwc3-generic.c
++++ b/drivers/usb/dwc3/dwc3-generic.c
+@@ -422,13 +422,13 @@ static int dwc3_glue_bind_common(struct udevice *parent, ofnode node)
+ 		dr_mode = usb_get_dr_mode(node);
+ 
+ 	switch (dr_mode) {
++#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+ 	case USB_DR_MODE_PERIPHERAL:
+ 	case USB_DR_MODE_OTG:
+-#if CONFIG_IS_ENABLED(DM_USB_GADGET)
+ 		debug("%s: dr_mode: OTG or Peripheral\n", __func__);
+ 		driver = "dwc3-generic-peripheral";
+-#endif
+ 		break;
++#endif
+ #if defined(CONFIG_SPL_USB_HOST) || !defined(CONFIG_SPL_BUILD)
+ 	case USB_DR_MODE_HOST:
+ 		debug("%s: dr_mode: HOST\n", __func__);
+-- 
+2.40.1
+
