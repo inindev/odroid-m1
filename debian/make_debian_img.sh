@@ -7,6 +7,7 @@ set -e
 #   2: download failure
 #   3: image mount failure
 #   4: missing file
+#   5: invalid file hash
 #   9: superuser required
 
 main() {
@@ -18,9 +19,15 @@ main() {
     local acct_uid='debian'
     local acct_pass='debian'
     local disable_ipv6=true
-    local extra_pkgs='curl, pciutils, sudo, u-boot-tools, unzip, wget, xxd, xz-utils, zip, zstd'
+    local extra_pkgs='curl, pciutils, sudo, wget, xxd, xz-utils, zip, zstd'
 
-    is_param 'clean' $@ && rm -rf cache.* && rm "$media"* && exit 0
+    if is_param 'clean' "$@"; then
+        rm -rf cache*/var
+        rm -f "$media"*
+        rm -rf rootfs
+        echo '\nclean complete\n'
+        exit 0
+    fi
 
     if [ -f "$media" ]; then
         read -p "file $media exists, overwrite? <y/N> " yn
@@ -31,7 +38,7 @@ main() {
     fi
 
     # no compression if disabled or block media
-    local compress=$(is_param 'nocomp' $@ || [ -b "$media" ] && echo false || echo true)
+    local compress=$(is_param 'nocomp' "$@" || [ -b "$media" ] && echo false || echo true)
 
     if $compress && [ -f "$media.xz" ]; then
         read -p "file $media.xz exists, overwrite? <y/N> " yn
@@ -41,16 +48,14 @@ main() {
         fi
     fi
 
-    check_installed 'debootstrap' 'u-boot-tools' 'wget' 'xz-utils'
+    check_installed 'debootstrap' 'wget' 'xz-utils'
 
     print_hdr "downloading files"
     local cache="cache.$deb_dist"
     # linux firmware
     local lfw=$(download "$cache" 'https://mirrors.edge.kernel.org/pub/linux/kernel/firmware/linux-firmware-20230210.tar.xz')
     local lfwsha='6e3d9e8d52cffc4ec0dbe8533a8445328e0524a20f159a5b61c2706f983ce38a'
-    # device tree
-    local dtb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/rk3568-odroid-m1.dtb')
-#    local dtb='../dtb/rk3568-odroid-m1.dtb'
+    # u-boot
     local uboot_spl=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/idbloader.img')
 #    local uboot_spl='../uboot/idbloader.img'
     local uboot_itb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/u-boot.itb')
@@ -59,11 +64,6 @@ main() {
     if [ "$lfwsha" != $(sha256sum "$lfw" | cut -c1-64) ]; then
         echo "invalid hash for linux firmware: $lfw"
         exit 5
-    fi
-
-    if [ ! -f "$dtb" ]; then
-        echo "device tree binary is missing: $dtb"
-        exit 4
     fi
 
     if [ ! -f "$uboot_spl" ]; then
@@ -89,16 +89,33 @@ main() {
 
     mount_media "$media"
 
+    print_hdr "configuring files"
+    mkdir "$mountpt/etc"
+    echo 'link_in_boot = 1' > "$mountpt/etc/kernel-img.conf"
+    echo 'do_symlinks = 0' >> "$mountpt/etc/kernel-img.conf"
+
+    # setup fstab
+    local mdev="$(findmnt -no source "$mountpt")"
+    local uuid="$(blkid -o value -s UUID "$mdev")"
+    echo "$(file_fstab $uuid)\n" > "$mountpt/etc/fstab"
+
+    # setup extlinux boot
+    install -Dm 754 'files/dtb_copy' "$mountpt/etc/kernel/postinst.d/dtb_copy"
+    install -Dm 754 'files/dtb_rm' "$mountpt/etc/kernel/postrm.d/dtb_rm"
+    install -Dm 754 'files/mk_extlinux.sh' "$mountpt/boot/mk_extlinux.sh"
+    $disable_ipv6 || sed -i 's/ ipv6.disable=1//g' "$mountpt/boot/mk_extlinux.sh"
+    ln -svf '../../../boot/mk_extlinux.sh' "$mountpt/etc/kernel/postinst.d/update_extlinux"
+    ln -svf '../../../boot/mk_extlinux.sh' "$mountpt/etc/kernel/postrm.d/update_extlinux"
+
+    # install debian linux from deb packages (debootstrap)
+    print_hdr "installing root filesystem from debian.org"
+
     # do not write the cache to the image
     mkdir -p "$cache/var/cache" "$cache/var/lib/apt/lists"
     mkdir -p "$mountpt/var/cache" "$mountpt/var/lib/apt/lists"
     mount -o bind "$cache/var/cache" "$mountpt/var/cache"
     mount -o bind "$cache/var/lib/apt/lists" "$mountpt/var/lib/apt/lists"
 
-    # install debian linux from official repo packages
-    print_hdr "installing root filesystem from debian.org"
-    mkdir "$mountpt/etc"
-    echo 'link_in_boot = 1' > "$mountpt/etc/kernel-img.conf"
     local pkgs="linux-image-arm64, dbus, dhcpcd5, libpam-systemd, openssh-server, systemd-timesyncd"
     pkgs="$pkgs, wireless-regdb, wpasupplicant"
     pkgs="$pkgs, $extra_pkgs"
@@ -107,19 +124,14 @@ main() {
     umount "$mountpt/var/cache"
     umount "$mountpt/var/lib/apt/lists"
 
-    print_hdr "configuring files"
+    print_hdr "installing firmware"
+    mkdir -p "$mountpt/lib/firmware"
+    local lfwn=$(basename "$lfw")
+    tar -C "$mountpt/lib/firmware" --strip-components=1 --wildcards -xavf "$lfw" "${lfwn%%.*}/rockchip" "${lfwn%%.*}/rtl_bt" "${lfwn%%.*}/rtl_nic"
+
+    # apt sources & default locale
     echo "$(file_apt_sources $deb_dist)\n" > "$mountpt/etc/apt/sources.list"
     echo "$(file_locale_cfg)\n" > "$mountpt/etc/default/locale"
-
-    # disable sshd until after keys are regenerated on first boot
-    rm -f "$mountpt/etc/systemd/system/sshd.service"
-    rm -f "$mountpt/etc/systemd/system/multi-user.target.wants/ssh.service"
-    rm -f "$mountpt/etc/ssh/ssh_host_"*
-
-    rm -f "$mountpt/etc/machine.id"
-    rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
-    echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
-    cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
 
     # hostname
     echo $hostname > "$mountpt/etc/hostname"
@@ -132,30 +144,30 @@ main() {
     sed -i '/alias.l.=/s/^#*\s*//' "$mountpt/root/.bashrc"
 
     # motd (off by default)
-    is_param 'motd' $@ && [ -f '../etc/motd' ] && cp -f '../etc/motd' "$mountpt/etc"
-
-    # setup /boot
-    echo "$(script_boot_txt $disable_ipv6)\n" > "$mountpt/boot/boot.txt"
-    mkimage -A arm64 -O linux -T script -C none -n 'u-boot boot script' -d "$mountpt/boot/boot.txt" "$mountpt/boot/boot.scr"
-    echo "$(script_mkscr_sh)\n" > "$mountpt/boot/mkscr.sh"
-    chmod 754 "$mountpt/boot/mkscr.sh"
-    install -m 644 "$dtb" "$mountpt/boot"
-    ln -sf $(basename "$dtb") "$mountpt/boot/dtb"
-
-    print_hdr "installing firmware"
-    mkdir -p "$mountpt/lib/firmware"
-    local lfwn=$(basename "$lfw")
-    tar -C "$mountpt/lib/firmware" --strip-components=1 --wildcards -xavf "$lfw" "${lfwn%%.*}/rockchip" "${lfwn%%.*}/rtl_bt" "${lfwn%%.*}/rtl_nic"
-
-    print_hdr "installing rootfs expansion script to /etc/rc.local"
-    echo "$(script_rc_local)\n" > "$mountpt/etc/rc.local"
-    chmod 754 "$mountpt/etc/rc.local"
+    is_param 'motd' "$@" && [ -f '../etc/motd' ] && cp -f '../etc/motd' "$mountpt/etc"
 
     print_hdr "creating user account"
     chroot "$mountpt" /usr/sbin/useradd -m $acct_uid -s /bin/bash
     chroot "$mountpt" /bin/sh -c "/usr/bin/echo $acct_uid:$acct_pass | /usr/sbin/chpasswd -c YESCRYPT"
     chroot "$mountpt" /usr/bin/passwd -e $acct_uid
     (umask 377 && echo "$acct_uid ALL=(ALL) NOPASSWD: ALL" > "$mountpt/etc/sudoers.d/$acct_uid")
+
+    print_hdr "installing rootfs expansion script to /etc/rc.local"
+    echo "$(script_rc_local)\n" > "$mountpt/etc/rc.local"
+    chmod 754 "$mountpt/etc/rc.local"
+
+    # disable sshd until after keys are regenerated on first boot
+    rm -f "$mountpt/etc/systemd/system/sshd.service"
+    rm -f "$mountpt/etc/systemd/system/multi-user.target.wants/ssh.service"
+    rm -f "$mountpt/etc/ssh/ssh_host_"*
+
+    # generate machine id on first boot
+    rm -f "$mountpt/etc/machine.id"
+
+    # misc cleanup
+    rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
+    echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
+    cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
 
     # reduce entropy on non-block media
     [ -b "$media" ] || fstrim -v "$mountpt"
@@ -226,7 +238,6 @@ mount_media() {
     local partnum="1"
 
     if [ -d "$mountpt" ]; then
-        echo "cleaning up mount points..."
         mountpoint -q "$mountpt/var/cache" && umount "$mountpt/var/cache"
         mountpoint -q "$mountpt/var/lib/apt/lists" && umount "$mountpt/var/lib/apt/lists"
         mountpoint -q "$mountpt" && umount "$mountpt"
@@ -339,6 +350,18 @@ check_installed() {
     fi
 }
 
+file_fstab() {
+    local uuid="$1"
+
+    cat <<-EOF
+	# if editing the device name for the root entry, it is necessary to
+	# regenerate the extlinux.conf file by running /boot/mk_extlinux.sh
+
+	# <device>					<mount>	<type>	<options>		<dump> <pass>
+	UUID=$uuid	/	ext4	errors=remount-ro	0      1
+	EOF
+}
+
 file_apt_sources() {
     local deb_dist="$1"
 
@@ -414,6 +437,8 @@ script_rc_local() {
 	    uuid="\$(cat /proc/sys/kernel/random/uuid)"
 	    echo "changing rootfs uuid: \$uuid"
 	    tune2fs -U "\$uuid" "\$rp"
+	    sed -i "s|\$(findmnt -fsno source '/')|UUID=\$uuid|" /etc/fstab
+	    /boot/mk_extlinux.sh
 
 	    # setup for expand fs
 	    chmod 774 "\$this"
@@ -422,49 +447,12 @@ script_rc_local() {
 	EOF
 }
 
-script_boot_txt() {
-    local no_ipv6="$($1 && echo ' ipv6.disable=1')"
-
-    cat <<-EOF
-	# after modifying, run ./mkscr.sh
-
-	part uuid \${devtype} \${devnum}:\${distro_bootpart} uuid
-	setenv bootargs console=ttyS2,1500000 root=PARTUUID=\${uuid} rw rootwait$no_ipv6 earlycon=uart8250,mmio32,0xfe660000
-
-	if load \${devtype} \${devnum}:\${distro_bootpart} \${kernel_addr_r} /boot/vmlinuz; then
-	    if load \${devtype} \${devnum}:\${distro_bootpart} \${fdt_addr_r} /boot/dtb; then
-	        fdt addr \${fdt_addr_r}
-	        fdt resize
-	        if load \${devtype} \${devnum}:\${distro_bootpart} \${ramdisk_addr_r} /boot/initrd.img; then
-	            booti \${kernel_addr_r} \${ramdisk_addr_r}:\${filesize} \${fdt_addr_r};
-	        else
-	            booti \${kernel_addr_r} - \${fdt_addr_r};
-	        fi;
-	    fi;
-	fi
-	EOF
-}
-
-script_mkscr_sh() {
-    cat <<-EOF
-	#!/bin/sh
-
-	if [ ! -x /usr/bin/mkimage ]; then
-	    echo 'mkimage not found, please install uboot tools:'
-	    echo '  sudo apt -y install u-boot-tools'
-	    exit 1
-	fi
-
-	mkimage -A arm64 -O linux -T script -C none -n 'u-boot boot script' -d boot.txt boot.scr
-	EOF
-}
-
 is_param() {
     local match
-    for item in $@; do
-        if [ -z $match ]; then
-            match=$item
-        elif [ $match = $item ]; then
+    for item in "$@"; do
+        if [ -z "$match" ]; then
+            match="$item"
+        elif [ "$match" = "$item" ]; then
             return
         fi
     done
@@ -472,7 +460,7 @@ is_param() {
 }
 
 print_hdr() {
-    local msg=$1
+    local msg="$1"
     echo "\n${h1}$msg...${rst}"
 }
 
