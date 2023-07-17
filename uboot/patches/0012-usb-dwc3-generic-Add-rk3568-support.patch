@@ -1,0 +1,52 @@
+From a5e7f929efe2a3b7e1ecc5e4e86a1952feb133fa Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Tue, 30 May 2023 10:26:24 +0000
+Subject: [PATCH 12/26] usb: dwc3-generic: Add rk3568 support
+
+RK3568 share glue and ctrl in a single node. Use glue_get_ctrl_dev to
+return the the glue node as the ctrl node.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+Reviewed-by: Jagan Teki <jagan@amarulasolutions.com>
+---
+ drivers/usb/dwc3/dwc3-generic.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/drivers/usb/dwc3/dwc3-generic.c b/drivers/usb/dwc3/dwc3-generic.c
+index f7859a5302..0d30657da3 100644
+--- a/drivers/usb/dwc3/dwc3-generic.c
++++ b/drivers/usb/dwc3/dwc3-generic.c
+@@ -406,6 +406,22 @@ struct dwc3_glue_ops ti_ops = {
+ 	.glue_configure = dwc3_ti_glue_configure,
+ };
+ 
++static int dwc3_rk_glue_get_ctrl_dev(struct udevice *dev, ofnode *node)
++{
++	if (!device_is_compatible(dev, "snps,dwc3"))
++		return -EINVAL;
++
++	*node = dev_ofnode(dev);
++	if (!ofnode_valid(*node))
++		return -EINVAL;
++
++	return 0;
++}
++
++struct dwc3_glue_ops rk_ops = {
++	.glue_get_ctrl_dev = dwc3_rk_glue_get_ctrl_dev,
++};
++
+ static int dwc3_glue_bind_common(struct udevice *parent, ofnode node)
+ {
+ 	const char *name = ofnode_get_name(node);
+@@ -607,6 +623,7 @@ static const struct udevice_id dwc3_glue_ids[] = {
+ 	{ .compatible = "ti,am654-dwc3" },
+ 	{ .compatible = "rockchip,rk3328-dwc3" },
+ 	{ .compatible = "rockchip,rk3399-dwc3" },
++	{ .compatible = "rockchip,rk3568-dwc3", .data = (ulong)&rk_ops },
+ 	{ .compatible = "qcom,dwc3" },
+ 	{ .compatible = "fsl,imx8mp-dwc3", .data = (ulong)&imx8mp_ops },
+ 	{ .compatible = "fsl,imx8mq-dwc3" },
+-- 
+2.40.1
+

@@ -1,7 +1,7 @@
-From 221ae2c33ed0d4bf28c92ffe99c20a33d87e7f50 Mon Sep 17 00:00:00 2001
+From 6ce452a37f5cc7c6e9cd2a7765cdcf5de79e0bc5 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 17 May 2023 22:53:44 +0000
-Subject: [PATCH 05/16] pci: pcie_dw_rockchip: Hide BARs of the root complex
+Subject: [PATCH 06/26] pci: pcie_dw_rockchip: Hide BARs of the root complex
 
 PCI Autoconfig read the Root Complex BARs and try to claim the entire
 1 GiB memory region on RK3568, leaving no space for any attached device.
@@ -50,10 +50,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  1 file changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/pci/pcie_dw_rockchip.c b/drivers/pci/pcie_dw_rockchip.c
-index cb347631fe..7df39572bb 100644
+index 82a8b9c96e..f56773c2e5 100644
 --- a/drivers/pci/pcie_dw_rockchip.c
 +++ b/drivers/pci/pcie_dw_rockchip.c
-@@ -145,6 +145,32 @@ static inline void rk_pcie_writel_apb(struct rk_pcie *rk_pcie, u32 reg,
+@@ -146,6 +146,32 @@ static inline void rk_pcie_writel_apb(struct rk_pcie *rk_pcie, u32 reg,
  	__rk_pcie_write_apb(rk_pcie, rk_pcie->apb_base, reg, 0x4, val);
  }
  
@@ -86,7 +86,7 @@ index cb347631fe..7df39572bb 100644
  /**
   * rk_pcie_configure() - Configure link capabilities and speed
   *
-@@ -472,7 +498,7 @@ rockchip_pcie_probe_err_init_port:
+@@ -476,7 +502,7 @@ rockchip_pcie_probe_err_init_port:
  }
  
  static const struct dm_pci_ops rockchip_pcie_ops = {
@@ -96,5 +96,5 @@ index cb347631fe..7df39572bb 100644
  };
  
 -- 
-2.39.2
+2.40.1
 
