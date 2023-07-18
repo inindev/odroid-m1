@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Copyright (C) 2023, John Clark <inindev@gmail.com>
+
 set -e
 
 # script exit codes:
@@ -19,15 +21,18 @@ main() {
     local acct_uid='debian'
     local acct_pass='debian'
     local disable_ipv6=true
-    local extra_pkgs='curl, pciutils, sudo, wget, xxd, xz-utils, zip, zstd'
+    local extra_pkgs='curl, pciutils, sudo, unzip, wget, xxd, xz-utils, zip, zstd'
 
     if is_param 'clean' "$@"; then
         rm -rf cache*/var
         rm -f "$media"*
+        rm -rf "$mountpt"
         rm -rf rootfs
         echo '\nclean complete\n'
         exit 0
     fi
+
+    check_installed 'wget' 'xz-utils'
 
     if [ -f "$media" ]; then
         read -p "file $media exists, overwrite? <y/N> " yn
@@ -48,8 +53,6 @@ main() {
         fi
     fi
 
-    check_installed 'debootstrap' 'wget' 'xz-utils'
-
     print_hdr "downloading files"
     local cache="cache.$deb_dist"
     # linux firmware
@@ -57,9 +60,7 @@ main() {
     local lfwsha='6e3d9e8d52cffc4ec0dbe8533a8445328e0524a20f159a5b61c2706f983ce38a'
     # u-boot
     local uboot_spl=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/idbloader.img')
-#    local uboot_spl='../uboot/idbloader.img'
     local uboot_itb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/u-boot.itb')
-#    local uboot_itb='../uboot/u-boot.itb'
 
     if [ "$lfwsha" != $(sha256sum "$lfw" | cut -c1-64) ]; then
         echo "invalid hash for linux firmware: $lfw"
@@ -103,7 +104,7 @@ main() {
     install -Dm 754 'files/dtb_copy' "$mountpt/etc/kernel/postinst.d/dtb_copy"
     install -Dm 754 'files/dtb_rm' "$mountpt/etc/kernel/postrm.d/dtb_rm"
     install -Dm 754 'files/mk_extlinux.sh' "$mountpt/boot/mk_extlinux.sh"
-    $disable_ipv6 || sed -i 's/ ipv6.disable=1//g' "$mountpt/boot/mk_extlinux.sh"
+    $disable_ipv6 || sed -i 's/ ipv6.disable=1//' "$mountpt/boot/mk_extlinux.sh"
     ln -svf '../../../boot/mk_extlinux.sh' "$mountpt/etc/kernel/postinst.d/update_extlinux"
     ln -svf '../../../boot/mk_extlinux.sh' "$mountpt/etc/kernel/postrm.d/update_extlinux"
 
@@ -137,6 +138,11 @@ main() {
     echo $hostname > "$mountpt/etc/hostname"
     sed -i "s/127.0.0.1\tlocalhost/127.0.0.1\tlocalhost\n127.0.1.1\t$hostname/" "$mountpt/etc/hosts"
 
+    # wpa supplicant
+    rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
+    echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
+    cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
+
     # enable ll alias
     sed -i '/alias.ll=/s/^#*\s*//' "$mountpt/etc/skel/.bashrc"
     sed -i '/export.LS_OPTIONS/s/^#*\s*//' "$mountpt/root/.bashrc"
@@ -147,14 +153,13 @@ main() {
     is_param 'motd' "$@" && [ -f '../etc/motd' ] && cp -f '../etc/motd' "$mountpt/etc"
 
     print_hdr "creating user account"
-    chroot "$mountpt" /usr/sbin/useradd -m $acct_uid -s /bin/bash
+    chroot "$mountpt" /usr/sbin/useradd -m "$acct_uid" -s '/bin/bash'
     chroot "$mountpt" /bin/sh -c "/usr/bin/echo $acct_uid:$acct_pass | /usr/sbin/chpasswd -c YESCRYPT"
-    chroot "$mountpt" /usr/bin/passwd -e $acct_uid
+    chroot "$mountpt" /usr/bin/passwd -e "$acct_uid"
     (umask 377 && echo "$acct_uid ALL=(ALL) NOPASSWD: ALL" > "$mountpt/etc/sudoers.d/$acct_uid")
 
     print_hdr "installing rootfs expansion script to /etc/rc.local"
-    echo "$(script_rc_local)\n" > "$mountpt/etc/rc.local"
-    chmod 754 "$mountpt/etc/rc.local"
+    install -m 754 'files/rc.local' "$mountpt/etc"
 
     # disable sshd until after keys are regenerated on first boot
     rm -f "$mountpt/etc/systemd/system/sshd.service"
@@ -163,11 +168,6 @@ main() {
 
     # generate machine id on first boot
     rm -f "$mountpt/etc/machine.id"
-
-    # misc cleanup
-    rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
-    echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
-    cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
 
     # reduce entropy on non-block media
     [ -b "$media" ] || fstrim -v "$mountpt"
@@ -321,34 +321,23 @@ check_mount_only() {
     exit 0
 }
 
-# download / return file from cache
-download() {
-    local cache="$1"
-    local url="$2"
+# ensure inner mount points get cleaned up
+on_exit() {
+    if mountpoint -q "$mountpt"; then
+        mountpoint -q "$mountpt/var/cache" && umount "$mountpt/var/cache"
+        mountpoint -q "$mountpt/var/lib/apt/lists" && umount "$mountpt/var/lib/apt/lists"
 
-    [ -d "$cache" ] || mkdir -p "$cache"
-
-    local filename="$(basename "$url")"
-    local filepath="$cache/$filename"
-    [ -f "$filepath" ] || wget "$url" -P "$cache"
-    [ -f "$filepath" ] || exit 2
-
-    echo "$filepath"
-}
-
-# check if utility program is installed
-check_installed() {
-    local todo
-    for item in "$@"; do
-        dpkg -l "$item" 2>/dev/null | grep -q "ii  $item" || todo="$todo $item"
-    done
-
-    if [ ! -z "$todo" ]; then
-        echo "this script requires the following packages:${bld}${yel}$todo${rst}"
-        echo "   run: ${bld}${grn}sudo apt update && sudo apt -y install$todo${rst}\n"
-        exit 1
+        read -p "$mountpt is still mounted, unmount? <Y/n> " yn
+        if [ -z "$yn" -o "$yn" = 'y' -o "$yn" = 'Y' -o "$yn" = 'yes' -o "$yn" = 'Yes' ]; then
+            echo "unmounting $mountpt"
+            umount "$mountpt"
+            sync
+            rm -rf "$mountpt"
+        fi
     fi
 }
+mountpt='rootfs'
+trap on_exit EXIT INT QUIT ABRT TERM
 
 file_fstab() {
     local uuid="$1"
@@ -369,82 +358,30 @@ file_apt_sources() {
 	# For information about how to configure apt package sources,
 	# see the sources.list(5) manual.
 
-	deb http://deb.debian.org/debian $deb_dist main contrib non-free non-free-firmware
-	#deb-src http://deb.debian.org/debian $deb_dist main contrib non-free non-free-firmware
+	deb http://deb.debian.org/debian ${deb_dist} main contrib non-free non-free-firmware
+	#deb-src http://deb.debian.org/debian ${deb_dist} main contrib non-free non-free-firmware
 
-	deb http://deb.debian.org/debian-security $deb_dist-security main contrib non-free non-free-firmware
-	#deb-src http://deb.debian.org/debian-security $deb_dist-security main contrib non-free non-free-firmware
+	deb http://deb.debian.org/debian-security ${deb_dist}-security main contrib non-free non-free-firmware
+	#deb-src http://deb.debian.org/debian-security ${deb_dist}-security main contrib non-free non-free-firmware
 
-	deb http://deb.debian.org/debian $deb_dist-updates main contrib non-free non-free-firmware
-	#deb-src http://deb.debian.org/debian $deb_dist-updates main contrib non-free non-free-firmware
+	deb http://deb.debian.org/debian ${deb_dist}-updates main contrib non-free non-free-firmware
+	#deb-src http://deb.debian.org/debian ${deb_dist}-updates main contrib non-free non-free-firmware
 	EOF
 }
 
-file_wpa_supplicant_conf() {
-    cat <<-EOF
-	ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-	update_config=1
-	EOF
-}
+# download / return file from cache
+download() {
+    local cache="$1"
+    local url="$2"
 
-file_locale_cfg() {
-    cat <<-EOF
-	LANG="C.UTF-8"
-	LANGUAGE=
-	LC_CTYPE="C.UTF-8"
-	LC_NUMERIC="C.UTF-8"
-	LC_TIME="C.UTF-8"
-	LC_COLLATE="C.UTF-8"
-	LC_MONETARY="C.UTF-8"
-	LC_MESSAGES="C.UTF-8"
-	LC_PAPER="C.UTF-8"
-	LC_NAME="C.UTF-8"
-	LC_ADDRESS="C.UTF-8"
-	LC_TELEPHONE="C.UTF-8"
-	LC_MEASUREMENT="C.UTF-8"
-	LC_IDENTIFICATION="C.UTF-8"
-	LC_ALL=
-	EOF
-}
+    [ -d "$cache" ] || mkdir -p "$cache"
 
-script_rc_local() {
-    cat <<-EOF
-	#!/bin/sh
+    local filename="$(basename "$url")"
+    local filepath="$cache/$filename"
+    [ -f "$filepath" ] || wget "$url" -P "$cache"
+    [ -f "$filepath" ] || exit 2
 
-	set -e
-
-	this=\$(realpath \$0)
-	perm=\$(stat -c %a \$this)
-
-	if [ 774 -eq \$perm ]; then
-	    # expand fs
-	    resize2fs "\$(findmnt -no source /)"
-	    rm "\$this"
-	    systemctl stop rc-local.service
-	else
-	    # regen ssh keys
-	    dpkg-reconfigure openssh-server
-	    systemctl enable ssh.service
-
-	    # expand root parition & change uuid
-	    rp="\$(findmnt -no source /)"
-	    rpn="\$(echo "\$rp" | grep -Eo '[[:digit:]]*\$')"
-	    rd="/dev/\$(lsblk -no pkname "\$rp")"
-	    uuid="\$(cat /proc/sys/kernel/random/uuid)"
-	    echo "size=+, uuid=\$uuid" | sfdisk -f -N "\$rpn" "\$rd"
-
-	    # change rootfs uuid
-	    uuid="\$(cat /proc/sys/kernel/random/uuid)"
-	    echo "changing rootfs uuid: \$uuid"
-	    tune2fs -U "\$uuid" "\$rp"
-	    sed -i "s|\$(findmnt -fsno source '/')|UUID=\$uuid|" /etc/fstab
-	    /boot/mk_extlinux.sh
-
-	    # setup for expand fs
-	    chmod 774 "\$this"
-	    reboot
-	fi
-	EOF
+    echo "$filepath"
 }
 
 is_param() {
@@ -459,29 +396,24 @@ is_param() {
     false
 }
 
+# check if utility program is installed
+check_installed() {
+    local todo
+    for item in "$@"; do
+        dpkg -l "$item" 2>/dev/null | grep -q "ii  $item" || todo="$todo $item"
+    done
+
+    if [ ! -z "$todo" ]; then
+        echo "this script requires the following packages:${bld}${yel}$todo${rst}"
+        echo "   run: ${bld}${grn}sudo apt update && sudo apt -y install$todo${rst}\n"
+        exit 1
+    fi
+}
+
 print_hdr() {
     local msg="$1"
     echo "\n${h1}$msg...${rst}"
 }
-
-# ensure inner mount points get cleaned up
-on_exit() {
-    if mountpoint -q "$mountpt"; then
-        print_hdr "cleaning up mount points"
-        mountpoint -q "$mountpt/var/cache" && umount "$mountpt/var/cache"
-        mountpoint -q "$mountpt/var/lib/apt/lists" && umount "$mountpt/var/lib/apt/lists"
-
-        read -p "$mountpt is still mounted, unmount? <Y/n> " yn
-        if [ -z "$yn" -o "$yn" = 'y' -o "$yn" = 'Y' -o "$yn" = 'yes' -o "$yn" = 'Yes' ]; then
-            echo "unmounting $mountpt"
-            umount "$mountpt"
-            sync
-            rm -rf "$mountpt"
-        fi
-    fi
-}
-mountpt='rootfs'
-trap on_exit EXIT INT QUIT ABRT TERM
 
 rst='\033[m'
 bld='\033[1m'
