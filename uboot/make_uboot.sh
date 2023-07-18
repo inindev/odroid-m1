@@ -3,21 +3,25 @@
 set -e
 
 # script exit codes:
-#   5: invalid file hash
+#   1: missing utility
 
 main() {
     local utag='v2023.07.02'
+    local branch='2023.07'
     local atf_file='../rkbin/rk3568_bl31_v1.28.elf'
     local tpl_file='../rkbin/rk3568_ddr_1560MHz_v1.15.bin'
 
-    if [ '_clean' = "_$1" ]; then
-        rm -f u-boot/simple-bin.fit.*
-        make -C u-boot distclean
-        git -C u-boot clean -f
-        git -C u-boot checkout master
-        git -C u-boot branch -D "uboot_$utag" 2>/dev/null || true
-        git -C u-boot pull --ff-only
+    if is_param 'clean' "$@"; then
         rm -f *.img *.itb
+        if [ -d u-boot ]; then
+            rm -f u-boot/simple-bin.fit.*
+            make -C u-boot distclean
+            git -C u-boot clean -f
+            git -C u-boot checkout master
+            git -C u-boot branch -D "$branch" 2>/dev/null || true
+            git -C u-boot pull --ff-only
+        fi
+        echo '\nclean complete\n'
         exit 0
     fi
 
@@ -28,25 +32,27 @@ main() {
         git -C u-boot fetch --tags
     fi
 
-    if ! git -C u-boot branch | grep -q "uboot_$utag"; then
-        git -C u-boot checkout -b "uboot_$utag" "$utag"
+    if ! git -C u-boot branch | grep -q "$branch"; then
+        git -C u-boot checkout -b "$branch" "$utag"
 
         for patch in patches/*.patch; do
             git -C u-boot am "../$patch"
         done
-    elif [ "uboot_$utag" != "$(git -C u-boot branch --show-current)" ]; then
-        git -C u-boot checkout "uboot_$utag"
+    elif [ "$branch" != "$(git -C u-boot branch --show-current)" ]; then
+        git -C u-boot checkout "$branch"
     fi
 
     # outputs: idbloader.img, u-boot.itb
     rm -f idbloader.img u-boot.itb
-    if [ '_inc' != "_$1" ]; then
+    if ! is_param 'inc' "$@"; then
         make -C u-boot distclean
         make -C u-boot odroid-m1-rk3568_defconfig
     fi
-    make -C u-boot -j$(nproc) BL31=$atf_file ROCKCHIP_TPL=$tpl_file
-    ln -sf u-boot/idbloader.img .
-    ln -sf u-boot/u-boot.itb .
+    make -C u-boot -j$(nproc) BL31="$atf_file" ROCKCHIP_TPL="$tpl_file"
+    ln -sfv u-boot/idbloader.img
+    ln -sfv u-boot/u-boot.itb
+
+    is_param 'cp' "$@" && cp_to_debian
 
     echo "\n${cya}idbloader and u-boot binaries are now ready${rst}"
     echo "\n${cya}copy images to media:${rst}"
@@ -62,9 +68,19 @@ main() {
     echo "    ${blu}sudo flash_erase /dev/mtd3 0 0${rst}"
     echo
     echo "  ${blu}flash u-boot to spi:${rst}"
-    echo "    ${blu}sudo flashcp -v idbloader.img /dev/mtd0${rst}"
-    echo "    ${blu}sudo flashcp -v u-boot.itb /dev/mtd2${rst}"
+    echo "    ${blu}sudo flashcp -Av idbloader.img /dev/mtd0${rst}"
+    echo "    ${blu}sudo flashcp -Av u-boot.itb /dev/mtd2${rst}"
     echo
+}
+
+cp_to_debian() {
+    local deb_dist=$(cat "../debian/make_debian_img.sh" | sed -n 's/\s*local deb_dist=.\([[:alpha:]]\+\)./\1/p')
+    [ -z "$deb_dist" ] && return
+    local cdir="../debian/cache.$deb_dist"
+    echo '\ncopying to debian cache...'
+    sudo mkdir -p "$cdir"
+    sudo cp -v './idbloader.img' "$cdir"
+    sudo cp -v './u-boot.itb' "$cdir"
 }
 
 check_installed() {
@@ -80,6 +96,18 @@ check_installed() {
     fi
 }
 
+is_param() {
+    local match
+    for item in "$@"; do
+        if [ -z "$match" ]; then
+            match="$item"
+        elif [ "$match" = "$item" ]; then
+            return
+        fi
+    done
+    false
+}
+
 rst='\033[m'
 bld='\033[1m'
 red='\033[31m'
@@ -90,5 +118,6 @@ mag='\033[35m'
 cya='\033[36m'
 h1="${blu}==>${rst} ${bld}"
 
-main $@
+cd "$(dirname "$(realpath "$0")")"
+main "$@"
 
