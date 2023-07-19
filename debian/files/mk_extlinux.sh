@@ -42,7 +42,7 @@ gen_menu_header() {
     echo 'menu title u-boot menu'
     echo "prompt ${mpv}"
     echo 'default l0'
-    printf 'timeout %d\n' "$((EXTL_MENU_TIMEOUT * 10))"
+    echo "timeout $((EXTL_MENU_TIMEOUT * 10))"
 }
 
 gen_menu_item() {

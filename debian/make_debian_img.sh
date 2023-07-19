@@ -128,7 +128,8 @@ main() {
     print_hdr "installing firmware"
     mkdir -p "$mountpt/lib/firmware"
     local lfwn=$(basename "$lfw")
-    tar -C "$mountpt/lib/firmware" --strip-components=1 --wildcards -xavf "$lfw" "${lfwn%%.*}/rockchip" "${lfwn%%.*}/rtl_bt" "${lfwn%%.*}/rtl_nic"
+    local lfwbn="${lfwn%%.*}"
+    tar -C "$mountpt/lib/firmware" --strip-components=1 --wildcards -xavf "$lfw" "$lfwbn/rockchip" "$lfwbn/rtl_bt" "$lfwbn/rtl_nic"
 
     # apt sources & default locale
     echo "$(file_apt_sources $deb_dist)\n" > "$mountpt/etc/apt/sources.list"
@@ -369,6 +370,33 @@ file_apt_sources() {
 	EOF
 }
 
+file_wpa_supplicant_conf() {
+    cat <<-EOF
+	ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+	update_config=1
+	EOF
+}
+
+file_locale_cfg() {
+    cat <<-EOF
+	LANG="C.UTF-8"
+	LANGUAGE=
+	LC_CTYPE="C.UTF-8"
+	LC_NUMERIC="C.UTF-8"
+	LC_TIME="C.UTF-8"
+	LC_COLLATE="C.UTF-8"
+	LC_MONETARY="C.UTF-8"
+	LC_MESSAGES="C.UTF-8"
+	LC_PAPER="C.UTF-8"
+	LC_NAME="C.UTF-8"
+	LC_ADDRESS="C.UTF-8"
+	LC_TELEPHONE="C.UTF-8"
+	LC_MEASUREMENT="C.UTF-8"
+	LC_IDENTIFICATION="C.UTF-8"
+	LC_ALL=
+	EOF
+}
+
 # download / return file from cache
 download() {
     local cache="$1"
@@ -396,7 +424,7 @@ is_param() {
     false
 }
 
-# check if utility program is installed
+# check if debian package is installed
 check_installed() {
     local todo
     for item in "$@"; do
