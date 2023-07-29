@@ -7,9 +7,12 @@ set -e
 
 main() {
     local utag='v2023.07.02'
-    local branch='2023.07'
     local atf_file='../rkbin/rk3568_bl31_v1.28.elf'
     local tpl_file='../rkbin/rk3568_ddr_1560MHz_v1.15.bin'
+
+    # branch name is yyyy.mm
+    local branch="$(echo "$utag" | sed -rn 's/.*(20[2-9][3-9]\.[0-1][0-9]).*/\1/p')"
+    echo "branch: $branch"
 
     if is_param 'clean' "$@"; then
         rm -f *.img *.itb
