@@ -61,9 +61,9 @@ main() {
     [ "$lfwsha" = $(sha256sum "$lfw" | cut -c1-64) ] || { echo "invalid hash for $lfw"; exit 5; }
 
     # u-boot
-    local uboot_spl=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/idbloader.img')
+    local uboot_spl=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0.1/idbloader.img')
     [ -f "$uboot_spl" ] || { echo "unable to fetch $uboot_spl"; exit 4; }
-    local uboot_itb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0/u-boot.itb')
+    local uboot_itb=$(download "$cache" 'https://github.com/inindev/odroid-m1/releases/download/v12.0.1/u-boot.itb')
     [ -f "$uboot_itb" ] || { echo "unable to fetch: $uboot_itb"; exit 4; }
 
     # setup media
