@@ -92,9 +92,9 @@ main() {
     echo "$(file_fstab $uuid)\n" > "$mountpt/etc/fstab"
 
     # setup extlinux boot
-    install -Dm 754 'files/dtb_cp' "$mountpt/etc/kernel/postinst.d/dtb_cp"
-    install -Dm 754 'files/dtb_rm' "$mountpt/etc/kernel/postrm.d/dtb_rm"
-    install -Dm 754 'files/mk_extlinux' "$mountpt/boot/mk_extlinux"
+    install -Dvm 754 'files/dtb_cp' "$mountpt/etc/kernel/postinst.d/dtb_cp"
+    install -Dvm 754 'files/dtb_rm' "$mountpt/etc/kernel/postrm.d/dtb_rm"
+    install -Dvm 754 'files/mk_extlinux' "$mountpt/boot/mk_extlinux"
     ln -svf '../../../boot/mk_extlinux' "$mountpt/etc/kernel/postinst.d/update_extlinux"
     ln -svf '../../../boot/mk_extlinux' "$mountpt/etc/kernel/postrm.d/update_extlinux"
 
@@ -113,7 +113,7 @@ main() {
     mount -o bind "$cache/var/cache" "$mountpt/var/cache"
     mount -o bind "$cache/var/lib/apt/lists" "$mountpt/var/lib/apt/lists"
 
-    local pkgs="linux-image-arm64, dbus, dhcpcd5, libpam-systemd, openssh-server, systemd-timesyncd"
+    local pkgs="linux-image-arm64, dbus, dhcpcd, libpam-systemd, openssh-server, systemd-timesyncd"
     pkgs="$pkgs, wireless-regdb, wpasupplicant"
     pkgs="$pkgs, $extra_pkgs"
     debootstrap --arch arm64 --include "$pkgs" --exclude "isc-dhcp-client" "$deb_dist" "$mountpt" 'https://deb.debian.org/debian/'
@@ -126,9 +126,9 @@ main() {
     echo "$(file_locale_cfg)\n" > "$mountpt/etc/default/locale"
 
     # wpa supplicant
-    rm -rf "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
+    rm -rfv "$mountpt/etc/systemd/system/multi-user.target.wants/wpa_supplicant.service"
     echo "$(file_wpa_supplicant_conf)\n" > "$mountpt/etc/wpa_supplicant/wpa_supplicant.conf"
-    cp "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
+    cp -v "$mountpt/usr/share/dhcpcd/hooks/10-wpa_supplicant" "$mountpt/usr/lib/dhcpcd/dhcpcd-hooks"
 
     # enable ll alias
     sed -i '/alias.ll=/s/^#*\s*//' "$mountpt/etc/skel/.bashrc"
@@ -150,15 +150,15 @@ main() {
     (umask 377 && echo "$acct_uid ALL=(ALL) NOPASSWD: ALL" > "$mountpt/etc/sudoers.d/$acct_uid")
 
     print_hdr "installing rootfs expansion script to /etc/rc.local"
-    install -Dm 754 'files/rc.local' "$mountpt/etc/rc.local"
+    install -Dvm 754 'files/rc.local' "$mountpt/etc/rc.local"
 
     # disable sshd until after keys are regenerated on first boot
-    rm -f "$mountpt/etc/systemd/system/sshd.service"
-    rm -f "$mountpt/etc/systemd/system/multi-user.target.wants/ssh.service"
-    rm -f "$mountpt/etc/ssh/ssh_host_"*
+    rm -fv "$mountpt/etc/systemd/system/sshd.service"
+    rm -fv "$mountpt/etc/systemd/system/multi-user.target.wants/ssh.service"
+    rm -fv "$mountpt/etc/ssh/ssh_host_"*
 
     # generate machine id on first boot
-    rm -f "$mountpt/etc/machine.id"
+    rm -fv "$mountpt/etc/machine-id"
 
     # reduce entropy on non-block media
     [ -b "$media" ] || fstrim -v "$mountpt"
@@ -245,7 +245,7 @@ mount_media() {
         success_msg="partition ${cya}$part${rst} successfully mounted on ${cya}$mountpt${rst}"
     elif [ -f "$media" ]; then
         # hard-coded to p1
-        mount -n -o loop,offset=16M "$media" "$mountpt"
+        mount -no loop,offset=16M "$media" "$mountpt"
         success_msg="media ${cya}$media${rst} partition 1 successfully mounted on ${cya}$mountpt${rst}"
     else
         echo "file not found: $media"
