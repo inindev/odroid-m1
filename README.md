@@ -16,7 +16,7 @@ If you want to run true up-stream Debian Linux on your ARM64 device, this is the
 
 **1. download image**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0.1/odroid-m1_bookworm-1201.img.xz
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0.2/odroid-m1_bookworm-1202.img.xz
 ```
 
 <br/>
@@ -40,7 +40,7 @@ brw-rw---- 1 root disk 8, 0 Apr 10 15:56 /dev/sda
 
 **3. in the case above, substitute 'a' for 'X' in the command below (for /dev/sda)**
 ```
-sudo sh -c 'xzcat odroid-m1_bookworm-1201.img.xz > /dev/sdX && sync'
+sudo sh -c 'xzcat odroid-m1_bookworm-1202.img.xz > /dev/sdX && sync'
 ```
 
 #### when the micro sd has finished imaging, eject and use it to boot the odroid m1 to finish setup
@@ -100,8 +100,8 @@ sudo nano /etc/hosts
 
 **1. while booted from mmc, download and copy the image file on to the ssd media**
 ```
-wget https://github.com/inindev/odroid-m1/releases/download/v12.0.1/odroid-m1_bookworm-1201.img.xz
-sudo sh -c 'xzcat odroid-m1_bookworm-1201.img.xz > /dev/nvme0n1 && sync'
+wget https://github.com/inindev/odroid-m1/releases/download/v12.0.2/odroid-m1_bookworm-1202.img.xz
+sudo sh -c 'xzcat odroid-m1_bookworm-1202.img.xz > /dev/nvme0n1 && sync'
 ```
 
 <br/>
