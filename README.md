@@ -1,4 +1,16 @@
 # odroid-m1
+
+> [!IMPORTANT]
+> **This repository has moved.** Active development continues at **[inindev/debian-image](https://github.com/inindev/debian-image)**, which is the direct successor to this repo and produces equivalent Debian ARM64 image artifacts.
+>
+> Two related (but independent) repos may also be of interest:
+> - **[inindev/linux-rockchip](https://github.com/inindev/linux-rockchip)** — a Rockchip-tuned kernel that can be installed as an alternative to the stock Debian kernel
+> - **[inindev/uboot-rockchip](https://github.com/inindev/uboot-rockchip)** — Rockchip U-Boot builds
+>
+> The content below is preserved for historical reference and may become out of date.
+
+---
+
 #### *Stock Debian ARM64 Linux for the ODROID-M1*
 
 This stock Debian ARM64 Linux image is built directly from official packages using the Debian [Debootstrap](https://wiki.debian.org/Debootstrap) utility, see: https://github.com/inindev/odroid-m1/blob/main/debian/make_debian_img.sh#L119
